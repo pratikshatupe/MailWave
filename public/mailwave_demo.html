@@ -1,0 +1,717 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Mailwave Product Demo</title>
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        background: #f8fafc;
+        color: #0f172a;
+        font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+          "Helvetica Neue", Arial, sans-serif;
+        font-size: 14px;
+        line-height: 1.45;
+      }
+      a {
+        color: inherit;
+      }
+
+      .app {
+        display: grid;
+        grid-template-columns: 200px 1fr;
+        height: 100%;
+        min-height: 100%;
+      }
+
+      /* Sidebar */
+      .sidebar {
+        background: linear-gradient(180deg, #1e1b4b 0%, #3b0764 100%);
+        color: #e2e8f0;
+        padding: 18px 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        overflow-y: auto;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 8px 16px;
+        font-weight: 700;
+        font-size: 15px;
+        color: #fff;
+        letter-spacing: 0.2px;
+      }
+      .brand-mark {
+        width: 26px;
+        height: 26px;
+        border-radius: 7px;
+        background: linear-gradient(135deg, #6366f1, #22d3ee);
+        display: grid;
+        place-items: center;
+        color: #fff;
+        font-size: 13px;
+      }
+      .nav-btn {
+        all: unset;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 9px 10px;
+        border-radius: 8px;
+        font-size: 13px;
+        color: #cbd5e1;
+        transition: background 0.15s, color 0.15s;
+      }
+      .nav-btn:hover {
+        background: rgba(255, 255, 255, 0.06);
+        color: #fff;
+      }
+      .nav-btn.active {
+        background: linear-gradient(
+          90deg,
+          rgba(99, 102, 241, 0.35),
+          rgba(217, 70, 239, 0.25)
+        );
+        color: #fff;
+      }
+      .nav-icon {
+        width: 16px;
+        height: 16px;
+        flex-shrink: 0;
+      }
+      .nav-divider {
+        height: 1px;
+        background: rgba(255, 255, 255, 0.08);
+        margin: 12px 4px;
+      }
+      .nav-footer {
+        margin-top: auto;
+        font-size: 11px;
+        color: #94a3b8;
+        padding: 8px;
+      }
+
+      /* Main */
+      .main {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+        overflow: hidden;
+      }
+      .topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 12px 18px;
+        background: #fff;
+        border-bottom: 1px solid #e2e8f0;
+      }
+      .topbar h1 {
+        margin: 0;
+        font-size: 15px;
+        font-weight: 700;
+        color: #0f172a;
+      }
+      .topbar .sub {
+        font-size: 12px;
+        color: #64748b;
+      }
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 600;
+        background: #ecfdf5;
+        color: #047857;
+      }
+      .pill .dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 999px;
+        background: #10b981;
+      }
+
+      .content {
+        flex: 1;
+        overflow-y: auto;
+        padding: 18px;
+      }
+      .panel {
+        display: none;
+        animation: fade 0.18s ease;
+      }
+      .panel.active {
+        display: block;
+      }
+      @keyframes fade {
+        from {
+          opacity: 0;
+          transform: translateY(4px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .grid {
+        display: grid;
+        gap: 14px;
+      }
+      .grid.cards {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+      .grid.two {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      @media (max-width: 760px) {
+        .app {
+          grid-template-columns: 1fr;
+        }
+        .sidebar {
+          display: none;
+        }
+        .grid.cards {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .grid.two {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .card {
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 14px;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+      }
+      .card .label {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
+        color: #64748b;
+        font-weight: 600;
+      }
+      .card .value {
+        margin-top: 6px;
+        font-size: 22px;
+        font-weight: 700;
+        color: #0f172a;
+      }
+      .card .delta {
+        margin-top: 6px;
+        font-size: 11px;
+        font-weight: 600;
+        color: #059669;
+      }
+      .card .delta.down {
+        color: #dc2626;
+      }
+
+      .section-title {
+        margin: 0 0 10px;
+        font-size: 13px;
+        font-weight: 700;
+        color: #0f172a;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .muted {
+        font-size: 12px;
+        color: #64748b;
+        font-weight: 500;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+      }
+      th,
+      td {
+        text-align: left;
+        padding: 9px 10px;
+        border-bottom: 1px solid #f1f5f9;
+      }
+      th {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #64748b;
+        font-weight: 600;
+        background: #f8fafc;
+      }
+      tr:last-child td {
+        border-bottom: 0;
+      }
+      .badge {
+        display: inline-flex;
+        padding: 2px 8px;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 600;
+      }
+      .badge.sent {
+        background: #dcfce7;
+        color: #166534;
+      }
+      .badge.draft {
+        background: #fef9c3;
+        color: #854d0e;
+      }
+      .badge.scheduled {
+        background: #e0e7ff;
+        color: #3730a3;
+      }
+      .badge.paused {
+        background: #fee2e2;
+        color: #991b1b;
+      }
+
+      .bar {
+        height: 6px;
+        border-radius: 999px;
+        background: #e2e8f0;
+        overflow: hidden;
+      }
+      .bar > span {
+        display: block;
+        height: 100%;
+        background: linear-gradient(90deg, #6366f1, #d946ef);
+      }
+
+      /* Chart */
+      .chart {
+        position: relative;
+        height: 160px;
+        padding: 8px 0 0;
+      }
+      .chart svg {
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
+      .legend {
+        display: flex;
+        gap: 14px;
+        font-size: 11px;
+        color: #475569;
+        margin-top: 8px;
+      }
+      .legend span::before {
+        content: "";
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border-radius: 999px;
+        margin-right: 6px;
+        vertical-align: middle;
+      }
+      .legend .l-open::before {
+        background: #6366f1;
+      }
+      .legend .l-click::before {
+        background: #d946ef;
+      }
+
+      /* Template grid */
+      .tpl {
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        background: #fff;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+      }
+      .tpl .preview {
+        height: 90px;
+        background: linear-gradient(135deg, #eef2ff, #fdf4ff);
+        position: relative;
+      }
+      .tpl .preview::after {
+        content: "";
+        position: absolute;
+        inset: 14px;
+        border-radius: 6px;
+        background: rgba(255, 255, 255, 0.85);
+        box-shadow: 0 1px 0 rgba(15, 23, 42, 0.04);
+      }
+      .tpl .meta {
+        padding: 10px 12px;
+      }
+      .tpl h4 {
+        margin: 0;
+        font-size: 13px;
+      }
+      .tpl p {
+        margin: 2px 0 0;
+        font-size: 11px;
+        color: #64748b;
+      }
+
+      /* Automation flow */
+      .flow {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        align-items: stretch;
+      }
+      .step {
+        flex: 1 1 140px;
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 10px 12px;
+        position: relative;
+      }
+      .step .kind {
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
+        color: #6366f1;
+      }
+      .step.delay .kind {
+        color: #d946ef;
+      }
+      .step.condition .kind {
+        color: #0ea5e9;
+      }
+      .step h5 {
+        margin: 4px 0 2px;
+        font-size: 13px;
+      }
+      .step p {
+        margin: 0;
+        font-size: 11px;
+        color: #64748b;
+      }
+      .arrow {
+        align-self: center;
+        color: #94a3b8;
+        font-size: 16px;
+      }
+
+      .toast {
+        position: fixed;
+        bottom: 14px;
+        right: 14px;
+        background: #0f172a;
+        color: #fff;
+        padding: 8px 12px;
+        font-size: 12px;
+        border-radius: 8px;
+        opacity: 0;
+        transform: translateY(6px);
+        transition: 0.2s;
+        pointer-events: none;
+        z-index: 50;
+      }
+      .toast.show {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <aside class="sidebar">
+        <div class="brand">
+          <span class="brand-mark">M</span> Mailwave
+        </div>
+        <button class="nav-btn active" data-tab="overview">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+          Overview
+        </button>
+        <button class="nav-btn" data-tab="campaigns">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8l9 6 9-6"/><rect x="3" y="5" width="18" height="14" rx="2"/></svg>
+          Campaigns
+        </button>
+        <button class="nav-btn" data-tab="contacts">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6"/><circle cx="17" cy="9" r="2.5"/><path d="M14.5 20c0-2.5 1.7-4.5 4-4.5"/></svg>
+          Contacts
+        </button>
+        <button class="nav-btn" data-tab="templates">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18"/></svg>
+          Templates
+        </button>
+        <button class="nav-btn" data-tab="automations">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="5" cy="6" r="2"/><circle cx="19" cy="6" r="2"/><circle cx="12" cy="18" r="2"/><path d="M7 6h10M6 8l6 8M18 8l-6 8"/></svg>
+          Automations
+        </button>
+        <button class="nav-btn" data-tab="analytics">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19V5M10 19V11M16 19V8M22 19H2"/></svg>
+          Analytics
+        </button>
+        <div class="nav-footer">Demo workspace · v1.0</div>
+      </aside>
+
+      <section class="main">
+        <header class="topbar">
+          <div>
+            <h1 id="page-title">Overview</h1>
+            <div class="sub" id="page-sub">Snapshot of your sending health</div>
+          </div>
+          <span class="pill"><span class="dot"></span> Live demo</span>
+        </header>
+
+        <div class="content">
+          <!-- Overview -->
+          <div class="panel active" data-panel="overview">
+            <div class="grid cards">
+              <div class="card">
+                <div class="label">Sent (30d)</div>
+                <div class="value">128,402</div>
+                <div class="delta">▲ 12.4%</div>
+              </div>
+              <div class="card">
+                <div class="label">Open rate</div>
+                <div class="value">42.1%</div>
+                <div class="delta">▲ 3.2%</div>
+              </div>
+              <div class="card">
+                <div class="label">Click rate</div>
+                <div class="value">7.8%</div>
+                <div class="delta">▲ 0.9%</div>
+              </div>
+              <div class="card">
+                <div class="label">Unsubscribes</div>
+                <div class="value">0.21%</div>
+                <div class="delta down">▼ 0.05%</div>
+              </div>
+            </div>
+
+            <div class="grid two" style="margin-top: 14px;">
+              <div class="card">
+                <div class="section-title">
+                  Engagement (last 14 days)
+                  <span class="muted">opens vs clicks</span>
+                </div>
+                <div class="chart">
+                  <svg viewBox="0 0 400 160" preserveAspectRatio="none">
+                    <defs>
+                      <linearGradient id="grad1" x1="0" x2="0" y1="0" y2="1">
+                        <stop offset="0%" stop-color="#6366f1" stop-opacity="0.4"/>
+                        <stop offset="100%" stop-color="#6366f1" stop-opacity="0"/>
+                      </linearGradient>
+                    </defs>
+                    <path d="M0,120 L30,110 L60,90 L90,95 L120,70 L150,75 L180,55 L210,60 L240,40 L270,50 L300,35 L330,45 L360,25 L400,30 L400,160 L0,160 Z" fill="url(#grad1)"/>
+                    <path d="M0,120 L30,110 L60,90 L90,95 L120,70 L150,75 L180,55 L210,60 L240,40 L270,50 L300,35 L330,45 L360,25 L400,30" fill="none" stroke="#6366f1" stroke-width="2"/>
+                    <path d="M0,140 L30,135 L60,125 L90,128 L120,115 L150,118 L180,105 L210,108 L240,95 L270,100 L300,88 L330,92 L360,80 L400,82" fill="none" stroke="#d946ef" stroke-width="2"/>
+                  </svg>
+                </div>
+                <div class="legend">
+                  <span class="l-open">Opens</span>
+                  <span class="l-click">Clicks</span>
+                </div>
+              </div>
+              <div class="card">
+                <div class="section-title">Top performing campaigns</div>
+                <table>
+                  <thead><tr><th>Campaign</th><th>Open</th><th>Click</th></tr></thead>
+                  <tbody>
+                    <tr><td>Spring Launch 2026</td><td>54.2%</td><td>11.3%</td></tr>
+                    <tr><td>Re-engage cold leads</td><td>47.8%</td><td>9.6%</td></tr>
+                    <tr><td>VIP perks newsletter</td><td>45.1%</td><td>8.4%</td></tr>
+                    <tr><td>Abandoned cart nudge</td><td>38.0%</td><td>14.2%</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- Campaigns -->
+          <div class="panel" data-panel="campaigns">
+            <div class="card">
+              <div class="section-title">
+                All campaigns
+                <span class="muted">12 total</span>
+              </div>
+              <table>
+                <thead><tr><th>Name</th><th>Status</th><th>Audience</th><th>Open</th><th>Click</th></tr></thead>
+                <tbody>
+                  <tr><td>Spring Launch 2026</td><td><span class="badge sent">Sent</span></td><td>12,840</td><td>54.2%</td><td>11.3%</td></tr>
+                  <tr><td>Weekly digest #18</td><td><span class="badge sent">Sent</span></td><td>34,210</td><td>39.8%</td><td>6.1%</td></tr>
+                  <tr><td>Q2 webinar invite</td><td><span class="badge scheduled">Scheduled</span></td><td>8,500</td><td>—</td><td>—</td></tr>
+                  <tr><td>Cold lead re-engage</td><td><span class="badge sent">Sent</span></td><td>5,210</td><td>47.8%</td><td>9.6%</td></tr>
+                  <tr><td>Pricing update</td><td><span class="badge draft">Draft</span></td><td>—</td><td>—</td><td>—</td></tr>
+                  <tr><td>Birthday rewards</td><td><span class="badge paused">Paused</span></td><td>1,920</td><td>—</td><td>—</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Contacts -->
+          <div class="panel" data-panel="contacts">
+            <div class="grid cards">
+              <div class="card"><div class="label">Total contacts</div><div class="value">48,231</div></div>
+              <div class="card"><div class="label">Subscribed</div><div class="value">46,902</div></div>
+              <div class="card"><div class="label">Segments</div><div class="value">14</div></div>
+              <div class="card"><div class="label">New (7d)</div><div class="value">+1,284</div></div>
+            </div>
+            <div class="card" style="margin-top: 14px;">
+              <div class="section-title">Segments
+                <span class="muted">share of audience</span>
+              </div>
+              <div style="display:flex; flex-direction: column; gap: 10px;">
+                <div>
+                  <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px;"><span>Active customers</span><span class="muted">42%</span></div>
+                  <div class="bar"><span style="width:42%"></span></div>
+                </div>
+                <div>
+                  <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px;"><span>Newsletter only</span><span class="muted">28%</span></div>
+                  <div class="bar"><span style="width:28%"></span></div>
+                </div>
+                <div>
+                  <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px;"><span>Trial users</span><span class="muted">17%</span></div>
+                  <div class="bar"><span style="width:17%"></span></div>
+                </div>
+                <div>
+                  <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px;"><span>VIP / High-LTV</span><span class="muted">9%</span></div>
+                  <div class="bar"><span style="width:9%"></span></div>
+                </div>
+                <div>
+                  <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px;"><span>Cold leads</span><span class="muted">4%</span></div>
+                  <div class="bar"><span style="width:4%"></span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Templates -->
+          <div class="panel" data-panel="templates">
+            <div class="grid cards">
+              <div class="tpl"><div class="preview"></div><div class="meta"><h4>Welcome series</h4><p>Onboarding · 4 emails</p></div></div>
+              <div class="tpl"><div class="preview"></div><div class="meta"><h4>Product launch</h4><p>Announcement</p></div></div>
+              <div class="tpl"><div class="preview"></div><div class="meta"><h4>Abandoned cart</h4><p>Recovery · 3 emails</p></div></div>
+              <div class="tpl"><div class="preview"></div><div class="meta"><h4>Monthly newsletter</h4><p>Editorial</p></div></div>
+              <div class="tpl"><div class="preview"></div><div class="meta"><h4>Re-engagement</h4><p>Win-back</p></div></div>
+              <div class="tpl"><div class="preview"></div><div class="meta"><h4>Receipt / Invoice</h4><p>Transactional</p></div></div>
+              <div class="tpl"><div class="preview"></div><div class="meta"><h4>Webinar invite</h4><p>Event</p></div></div>
+              <div class="tpl"><div class="preview"></div><div class="meta"><h4>Survey / NPS</h4><p>Feedback</p></div></div>
+            </div>
+          </div>
+
+          <!-- Automations -->
+          <div class="panel" data-panel="automations">
+            <div class="card">
+              <div class="section-title">
+                Welcome automation
+                <span class="muted">Active · 1,284 in flow</span>
+              </div>
+              <div class="flow">
+                <div class="step"><div class="kind">Trigger</div><h5>New signup</h5><p>When contact added to "Trial users"</p></div>
+                <div class="arrow">→</div>
+                <div class="step"><div class="kind">Email</div><h5>Welcome email</h5><p>Send "Welcome to Mailwave"</p></div>
+                <div class="arrow">→</div>
+                <div class="step delay"><div class="kind">Delay</div><h5>Wait 2 days</h5><p>Pause before nudge</p></div>
+                <div class="arrow">→</div>
+                <div class="step condition"><div class="kind">Condition</div><h5>Opened email?</h5><p>Branch on engagement</p></div>
+                <div class="arrow">→</div>
+                <div class="step"><div class="kind">Email</div><h5>Quick-start tips</h5><p>Send onboarding tips</p></div>
+              </div>
+            </div>
+
+            <div class="card" style="margin-top: 14px;">
+              <div class="section-title">Other automations</div>
+              <table>
+                <thead><tr><th>Name</th><th>Status</th><th>Contacts</th><th>Conversion</th></tr></thead>
+                <tbody>
+                  <tr><td>Abandoned cart recovery</td><td><span class="badge sent">Active</span></td><td>842</td><td>18.4%</td></tr>
+                  <tr><td>Post-purchase upsell</td><td><span class="badge sent">Active</span></td><td>1,203</td><td>11.7%</td></tr>
+                  <tr><td>Win-back (90 day idle)</td><td><span class="badge paused">Paused</span></td><td>340</td><td>—</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Analytics -->
+          <div class="panel" data-panel="analytics">
+            <div class="grid cards">
+              <div class="card"><div class="label">Delivered</div><div class="value">99.4%</div><div class="delta">▲ 0.2%</div></div>
+              <div class="card"><div class="label">Bounces</div><div class="value">0.6%</div><div class="delta down">▼ 0.1%</div></div>
+              <div class="card"><div class="label">Spam reports</div><div class="value">0.02%</div><div class="delta down">▼ 0.01%</div></div>
+              <div class="card"><div class="label">Sender score</div><div class="value">98</div><div class="delta">▲ 1</div></div>
+            </div>
+
+            <div class="card" style="margin-top: 14px;">
+              <div class="section-title">Send volume by provider</div>
+              <div style="display:flex; flex-direction: column; gap: 10px;">
+                <div>
+                  <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px;"><span>SendGrid</span><span class="muted">72%</span></div>
+                  <div class="bar"><span style="width:72%"></span></div>
+                </div>
+                <div>
+                  <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px;"><span>Amazon SES</span><span class="muted">23%</span></div>
+                  <div class="bar"><span style="width:23%"></span></div>
+                </div>
+                <div>
+                  <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px;"><span>Postmark</span><span class="muted">5%</span></div>
+                  <div class="bar"><span style="width:5%"></span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <div class="toast" id="toast">Switched view</div>
+
+    <script>
+      const titles = {
+        overview: ["Overview", "Snapshot of your sending health"],
+        campaigns: ["Campaigns", "Create, schedule and track bulk sends"],
+        contacts: ["Contacts", "Lists, segments and subscribers"],
+        templates: ["Templates", "Reusable, drag-and-drop email designs"],
+        automations: ["Automations", "Trigger-based journeys and workflows"],
+        analytics: ["Analytics", "Opens, clicks, bounces, deliverability"],
+      };
+
+      const navButtons = document.querySelectorAll(".nav-btn");
+      const panels = document.querySelectorAll(".panel");
+      const pageTitle = document.getElementById("page-title");
+      const pageSub = document.getElementById("page-sub");
+      const toast = document.getElementById("toast");
+      let toastTimer;
+
+      navButtons.forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const tab = btn.dataset.tab;
+
+          navButtons.forEach((b) => b.classList.toggle("active", b === btn));
+          panels.forEach((p) =>
+            p.classList.toggle("active", p.dataset.panel === tab)
+          );
+
+          const [title, sub] = titles[tab] || ["Overview", ""];
+          pageTitle.textContent = title;
+          pageSub.textContent = sub;
+
+          toast.textContent = `Viewing: ${title}`;
+          toast.classList.add("show");
+          clearTimeout(toastTimer);
+          toastTimer = setTimeout(() => toast.classList.remove("show"), 1200);
+        });
+      });
+    </script>
+  </body>
+</html>

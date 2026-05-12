@@ -1,9 +1,13 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowRight, PlayCircle, Sparkles } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import DashboardPreview from './DashboardPreview.jsx';
+import DemoModal from '../demo-modal.jsx';
 
 export default function Hero() {
+  const [isDemoOpen, setIsDemoOpen] = useState(false);
+
   return (
     <section className="relative overflow-hidden pt-24 pb-12 sm:pt-32 sm:pb-20 lg:pt-40 lg:pb-28">
       {/* Background */}
@@ -63,9 +67,13 @@ export default function Hero() {
               <Link to="/register" className="btn-primary">
                 Start Free Trial <ArrowRight className="h-4 w-4" />
               </Link>
-              <a href="#dashboard" className="btn-ghost">
+              <button
+                type="button"
+                onClick={() => setIsDemoOpen(true)}
+                className="btn-ghost cursor-pointer"
+              >
                 <PlayCircle className="h-4 w-4 text-indigo-600 dark:text-indigo-400" /> View Demo
-              </a>
+              </button>
             </motion.div>
 
             <motion.div
@@ -112,6 +120,8 @@ export default function Hero() {
           </div>
         </div>
       </div>
+
+      <DemoModal isOpen={isDemoOpen} onClose={() => setIsDemoOpen(false)} />
     </section>
   );
 }
