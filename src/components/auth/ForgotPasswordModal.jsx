@@ -7,30 +7,25 @@ import {
   KeyRound,
   CheckCircle2,
   RefreshCcw,
-  Eye,
-  EyeOff,
   Loader2,
 } from 'lucide-react';
-import Input from '../common/Input.jsx';
+
+import InputField from '../ui/InputField.jsx';
+import PasswordField from '../ui/PasswordField.jsx';
+
+import { LABELS } from '../../config/labels.js';
+import {
+  validateEmailId,
+  validatePassword,
+  validateConfirmPassword,
+} from '../../utils/validators.js';
+import { SUCCESS_MESSAGES } from '../../config/messages.js';
 
 const steps = [
   { id: 1, label: 'Email', Icon: Mail },
   { id: 2, label: 'Verify OTP', Icon: ShieldCheck },
   { id: 3, label: 'New password', Icon: KeyRound },
 ];
-
-function validateEmail(v) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
-}
-function strongPassword(v) {
-  return (
-    v.length >= 8 &&
-    /[a-z]/.test(v) &&
-    /[A-Z]/.test(v) &&
-    /\d/.test(v) &&
-    /[^A-Za-z0-9]/.test(v)
-  );
-}
 
 export default function ForgotPasswordModal({ open, onClose }) {
   const [step, setStep] = useState(1);
@@ -42,14 +37,14 @@ export default function ForgotPasswordModal({ open, onClose }) {
   const [pw2, setPw2] = useState('');
   const [pwErr, setPwErr] = useState('');
   const [pw2Err, setPw2Err] = useState('');
-  const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
   const [notice, setNotice] = useState('');
   const [done, setDone] = useState(false);
   const [resendIn, setResendIn] = useState(30);
   const otpRefs = useRef([]);
 
-  // reset state every time modal opens
+  // Reset state each time the modal opens so reopening clears previous
+  // errors — required by the form standards.
   useEffect(() => {
     if (open) {
       setStep(1);
@@ -61,7 +56,6 @@ export default function ForgotPasswordModal({ open, onClose }) {
       setPw2('');
       setPwErr('');
       setPw2Err('');
-      setShowPw(false);
       setLoading(false);
       setNotice('');
       setDone(false);
@@ -69,7 +63,6 @@ export default function ForgotPasswordModal({ open, onClose }) {
     }
   }, [open]);
 
-  // resend countdown
   useEffect(() => {
     if (step !== 2) return;
     if (resendIn <= 0) return;
@@ -77,7 +70,6 @@ export default function ForgotPasswordModal({ open, onClose }) {
     return () => clearInterval(t);
   }, [step, resendIn]);
 
-  // lock body scroll while open
   useEffect(() => {
     if (open) {
       const prev = document.body.style.overflow;
@@ -98,6 +90,7 @@ export default function ForgotPasswordModal({ open, onClose }) {
       return next;
     });
     if (ch && i < 5) otpRefs.current[i + 1]?.focus();
+    if (otpErr) setOtpErr('');
   }
 
   function onOtpKeyDown(e, i) {
@@ -117,14 +110,16 @@ export default function ForgotPasswordModal({ open, onClose }) {
   async function handleSendOtp(e) {
     e.preventDefault();
     setNotice('');
-    if (!email) return setEmailErr('Email is required');
-    if (!validateEmail(email)) return setEmailErr('Enter a valid email address');
+    const err = validateEmailId(email);
+    if (err) {
+      setEmailErr(err);
+      return;
+    }
     setEmailErr('');
     setLoading(true);
-    // TODO: backend integration — POST /api/auth/forgot-password { email }
     await new Promise((r) => setTimeout(r, 700));
     setLoading(false);
-    setNotice('OTP sent successfully to your email.');
+    setNotice(SUCCESS_MESSAGES.emailSent);
     setResendIn(30);
     setStep(2);
   }
@@ -132,10 +127,12 @@ export default function ForgotPasswordModal({ open, onClose }) {
   async function handleVerifyOtp(e) {
     e.preventDefault();
     setNotice('');
-    if (otpValue.length !== 6) return setOtpErr('OTP must be 6 digits');
+    if (otpValue.length !== 6) {
+      setOtpErr('OTP must be 6 digits.');
+      return;
+    }
     setOtpErr('');
     setLoading(true);
-    // TODO: backend integration — POST /api/auth/verify-otp { email, otp }
     await new Promise((r) => setTimeout(r, 700));
     setLoading(false);
     setNotice('Email verified successfully.');
@@ -146,30 +143,21 @@ export default function ForgotPasswordModal({ open, onClose }) {
     if (resendIn > 0) return;
     setNotice('');
     setLoading(true);
-    // TODO: backend integration — POST /api/auth/resend-otp { email }
     await new Promise((r) => setTimeout(r, 500));
     setLoading(false);
     setResendIn(30);
-    setNotice('A new OTP was sent to your email.');
+    setNotice('A new OTP was sent to your Email ID.');
   }
 
   async function handleUpdatePassword(e) {
     e.preventDefault();
     setNotice('');
-    let bad = false;
-    if (!strongPassword(pw)) {
-      setPwErr(
-        'Min 8 chars and include uppercase, lowercase, number and special character'
-      );
-      bad = true;
-    } else setPwErr('');
-    if (pw !== pw2) {
-      setPw2Err('Passwords do not match');
-      bad = true;
-    } else setPw2Err('');
-    if (bad) return;
+    const newErr = validatePassword(pw, LABELS.newPassword);
+    const confirmErr = validateConfirmPassword(pw, pw2);
+    setPwErr(newErr);
+    setPw2Err(confirmErr);
+    if (newErr || confirmErr) return;
     setLoading(true);
-    // TODO: backend integration — POST /api/auth/reset-password { email, otp, password }
     await new Promise((r) => setTimeout(r, 800));
     setLoading(false);
     setDone(true);
@@ -216,20 +204,20 @@ export default function ForgotPasswordModal({ open, onClose }) {
               </span>
               <h2 className="mt-4 text-xl font-extrabold text-slate-900 dark:text-white">
                 {done
-                  ? 'All done!'
+                  ? 'All done.'
                   : step === 1
-                  ? 'Reset your password'
+                  ? 'Reset your password.'
                   : step === 2
-                  ? 'Verify your email'
-                  : 'Choose a new password'}
+                  ? 'Verify your Email ID.'
+                  : 'Choose a new password.'}
               </h2>
               <p className="mt-1.5 text-sm text-slate-600 dark:text-slate-300">
                 {done
-                  ? 'Password changed successfully. Please login with your new password.'
+                  ? `${SUCCESS_MESSAGES.passwordReset} Please log in with your new password.`
                   : step === 1
-                  ? 'Enter your email and we’ll send you a 6-digit OTP.'
+                  ? `Enter your ${LABELS.emailId} and we’ll send you a 6-digit OTP.`
                   : step === 2
-                  ? `We sent a code to ${email || 'your email'}. Enter it below.`
+                  ? `We sent a code to ${email || `your ${LABELS.emailId}`}. Enter it below.`
                   : 'Make sure it’s strong and at least 8 characters long.'}
               </p>
             </div>
@@ -293,22 +281,20 @@ export default function ForgotPasswordModal({ open, onClose }) {
                   className="btn-primary w-full"
                   type="button"
                 >
-                  Back to login
+                  Back to {LABELS.logIn}
                 </button>
               ) : step === 1 ? (
                 <form onSubmit={handleSendOtp} className="space-y-4" noValidate>
-                  <Input
-                    name="email"
-                    type="email"
-                    label="Email address"
-                    placeholder="you@company.com"
-                    icon={Mail}
+                  <InputField
+                    field="emailId"
                     value={email}
                     onChange={(e) => {
                       setEmail(e.target.value);
                       if (emailErr) setEmailErr('');
                     }}
+                    onBlur={(e) => setEmailErr(validateEmailId(e.target.value))}
                     error={emailErr}
+                    autoComplete="email"
                   />
                   <button
                     type="submit"
@@ -328,7 +314,7 @@ export default function ForgotPasswordModal({ open, onClose }) {
                 <form onSubmit={handleVerifyOtp} className="space-y-4" noValidate>
                   <div>
                     <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
-                      Enter 6-digit OTP
+                      Enter 6-digit OTP<span className="text-rose-600 dark:text-rose-400">*</span>
                     </label>
                     <div className="flex justify-between gap-1.5 sm:gap-2" onPaste={onOtpPaste}>
                       {otp.map((d, i) => (
@@ -370,7 +356,7 @@ export default function ForgotPasswordModal({ open, onClose }) {
                       onClick={() => setStep(1)}
                       className="font-semibold text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
                     >
-                      ← Change email
+                      ← Change {LABELS.emailId}
                     </button>
                   </div>
 
@@ -390,45 +376,27 @@ export default function ForgotPasswordModal({ open, onClose }) {
                 </form>
               ) : (
                 <form onSubmit={handleUpdatePassword} className="space-y-4" noValidate>
-                  <Input
-                    name="new-password"
-                    type={showPw ? 'text' : 'password'}
-                    label="New password"
-                    placeholder="••••••••"
-                    icon={KeyRound}
+                  <PasswordField
+                    field="newPassword"
                     value={pw}
                     onChange={(e) => {
                       setPw(e.target.value);
                       if (pwErr) setPwErr('');
                     }}
+                    onBlur={(e) => setPwErr(validatePassword(e.target.value, LABELS.newPassword))}
                     error={pwErr}
-                    rightSlot={
-                      <button
-                        type="button"
-                        onClick={() => setShowPw((v) => !v)}
-                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:text-slate-500 dark:hover:bg-slate-800 dark:hover:text-slate-200"
-                        aria-label="Toggle password"
-                      >
-                        {showPw ? (
-                          <EyeOff className="h-4 w-4" />
-                        ) : (
-                          <Eye className="h-4 w-4" />
-                        )}
-                      </button>
-                    }
+                    autoComplete="new-password"
                   />
-                  <Input
-                    name="confirm-password"
-                    type={showPw ? 'text' : 'password'}
-                    label="Confirm new password"
-                    placeholder="••••••••"
-                    icon={KeyRound}
+                  <PasswordField
+                    field="confirmPassword"
                     value={pw2}
                     onChange={(e) => {
                       setPw2(e.target.value);
                       if (pw2Err) setPw2Err('');
                     }}
+                    onBlur={(e) => setPw2Err(validateConfirmPassword(pw, e.target.value))}
                     error={pw2Err}
+                    autoComplete="new-password"
                   />
                   <button
                     type="submit"
@@ -440,7 +408,7 @@ export default function ForgotPasswordModal({ open, onClose }) {
                         <Loader2 className="h-4 w-4 animate-spin" /> Updating…
                       </>
                     ) : (
-                      'Update Password'
+                      `Update ${LABELS.password}`
                     )}
                   </button>
                 </form>

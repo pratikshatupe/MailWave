@@ -5,7 +5,6 @@ import {
   TrendingUp,
   AlertTriangle,
   Activity,
-  CheckCircle2,
   Sparkles,
 } from 'lucide-react';
 
@@ -58,64 +57,9 @@ function MiniChart() {
   );
 }
 
-function FloatingEnvelope({ className, delay = 0, label, hue }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 30 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay, duration: 0.6 }}
-      className={`pointer-events-none absolute ${className}`}
-    >
-      <motion.div
-        animate={{ y: [0, -10, 0] }}
-        transition={{
-          repeat: Infinity,
-          duration: 5 + delay,
-          ease: 'easeInOut',
-        }}
-        className="flex items-center gap-2 rounded-2xl border border-white/60 bg-white/85 px-3 py-2.5 shadow-card backdrop-blur dark:border-slate-700/70 dark:bg-slate-900/85"
-      >
-        <span
-          className={`grid h-8 w-8 place-items-center rounded-xl bg-gradient-to-br ${hue} text-white`}
-        >
-          <Mail className="h-4 w-4" />
-        </span>
-        <div className="text-left">
-          <div className="text-[11px] font-semibold text-slate-900 dark:text-white">
-            {label}
-          </div>
-          <div className="text-[10px] text-slate-500 dark:text-slate-400">
-            Just delivered
-          </div>
-        </div>
-        <CheckCircle2 className="h-4 w-4 text-emerald-500 dark:text-emerald-400" />
-      </motion.div>
-    </motion.div>
-  );
-}
-
 export default function DashboardPreview() {
   return (
-    <div className="relative">
-      <FloatingEnvelope
-        className="-left-6 top-6 hidden sm:block"
-        delay={0.2}
-        label="Welcome aboard 👋"
-        hue="from-indigo-500 to-fuchsia-500"
-      />
-      <FloatingEnvelope
-        className="-right-6 top-24 hidden sm:block"
-        delay={0.6}
-        label="Black Friday Drop"
-        hue="from-fuchsia-500 to-pink-500"
-      />
-      <FloatingEnvelope
-        className="left-10 -bottom-6 hidden sm:block"
-        delay={1.0}
-        label="Re-engagement series"
-        hue="from-cyan-500 to-blue-500"
-      />
-
+    <div className="relative isolate">
       <motion.div
         initial={{ opacity: 0, y: 24, scale: 0.98 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}

@@ -76,7 +76,7 @@ export default function Hero() {
             >
               <div className="flex items-center gap-2">
                 <span className="inline-block h-2 w-2 rounded-full bg-emerald-500" />
-                14-day free trial • No credit card
+                7-day free trial • No credit card
               </div>
               <div className="flex items-center gap-2">
                 <span className="inline-block h-2 w-2 rounded-full bg-indigo-500" />

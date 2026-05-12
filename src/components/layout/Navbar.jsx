@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import { Menu, X, Rocket } from 'lucide-react';
 import Logo from '../common/Logo.jsx';
 import ThemeToggle from '../common/ThemeToggle.jsx';
+import { ROUTES } from '../../config/routes.js';
+import { LABELS } from '../../config/labels.js';
 
 const links = [
   { label: 'Features', href: '#features' },
@@ -49,14 +51,14 @@ export default function Navbar() {
         <div className="hidden items-center gap-2 md:flex">
           <ThemeToggle size="sm" />
           <Link
-            to="/login"
-            className="rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"
+            to={ROUTES.login}
+            className="cursor-pointer rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"
           >
-            Login
+            {LABELS.logIn}
           </Link>
           <Link
-            to="/register"
-            className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-indigo-600 to-fuchsia-600 px-4 py-2.5 text-sm font-semibold text-white shadow-glow transition hover:scale-[1.03]"
+            to={ROUTES.register}
+            className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl bg-gradient-to-r from-indigo-600 to-fuchsia-600 px-4 py-2.5 text-sm font-semibold text-white shadow-glow transition hover:scale-[1.03]"
           >
             <Rocket className="h-4 w-4" /> Start Free
           </Link>
@@ -89,14 +91,14 @@ export default function Navbar() {
             ))}
             <div className="mt-2 flex gap-2">
               <Link
-                to="/login"
-                className="flex-1 rounded-xl border border-slate-200 px-4 py-2.5 text-center text-sm font-semibold text-slate-700 dark:border-slate-700 dark:text-slate-200"
+                to={ROUTES.login}
+                className="flex-1 cursor-pointer rounded-xl border border-slate-200 px-4 py-2.5 text-center text-sm font-semibold text-slate-700 dark:border-slate-700 dark:text-slate-200"
               >
-                Login
+                {LABELS.logIn}
               </Link>
               <Link
-                to="/register"
-                className="flex-1 rounded-xl bg-gradient-to-r from-indigo-600 to-fuchsia-600 px-4 py-2.5 text-center text-sm font-semibold text-white"
+                to={ROUTES.register}
+                className="flex-1 cursor-pointer rounded-xl bg-gradient-to-r from-indigo-600 to-fuchsia-600 px-4 py-2.5 text-center text-sm font-semibold text-white"
               >
                 Start Free
               </Link>

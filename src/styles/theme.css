@@ -1,0 +1,97 @@
+/**
+ * theme.css
+ *
+ * Central CSS variables for Mailwave. Change any value here and it
+ * propagates everywhere components consume `var(--…)`. Pairs with
+ * src/config/theme.js — keep both in sync.
+ */
+
+:root {
+  /* Fonts */
+  --font-primary: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI',
+    Roboto, sans-serif;
+  --font-heading: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI',
+    Roboto, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  /* Light-mode colours */
+  --colour-primary: #4f46e5;
+  --colour-secondary: #a855f7;
+  --colour-accent: #06b6d4;
+  --colour-success: #10b981;
+  --colour-warning: #f59e0b;
+  --colour-danger: #ef4444;
+  --colour-bg: #ffffff;
+  --colour-card: #ffffff;
+  --colour-border: #e2e8f0;
+  --colour-text: #0f172a;
+  --colour-muted: #64748b;
+
+  /* Radius & shadows */
+  --radius-card: 1rem;
+  --radius-button: 0.75rem;
+  --shadow-card: 0 20px 60px -20px rgba(15, 23, 42, 0.25);
+  --shadow-soft: 0 10px 30px -10px rgba(15, 23, 42, 0.15);
+  --shadow-glow: 0 10px 40px -12px rgba(99, 102, 241, 0.55);
+}
+
+html.dark {
+  --colour-primary: #818cf8;
+  --colour-secondary: #c084fc;
+  --colour-accent: #22d3ee;
+  --colour-success: #34d399;
+  --colour-warning: #fbbf24;
+  --colour-danger: #f87171;
+  --colour-bg: #020617;
+  --colour-card: #0f172a;
+  --colour-border: #1e293b;
+  --colour-text: #e2e8f0;
+  --colour-muted: #94a3b8;
+}
+
+/* Apply primary font globally — change --font-primary above to swap. */
+html,
+body {
+  font-family: var(--font-primary);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-heading);
+}
+
+code,
+pre,
+kbd,
+samp {
+  font-family: var(--font-mono);
+}
+
+/* ----- Utility classes wired to the central tokens ----- */
+
+.text-themed { color: var(--colour-text); }
+.text-muted-themed { color: var(--colour-muted); }
+.bg-themed { background-color: var(--colour-bg); }
+.bg-card-themed { background-color: var(--colour-card); }
+.border-themed { border-color: var(--colour-border); }
+
+.btn-themed-primary {
+  background-color: var(--colour-primary);
+  color: #fff;
+  border-radius: var(--radius-button);
+  box-shadow: var(--shadow-glow);
+}
+
+.shadow-card-themed { box-shadow: var(--shadow-card); }
+.rounded-card-themed { border-radius: var(--radius-card); }
+
+/* Required-field asterisk: red, attached with no space (Name*). */
+.required-marker {
+  color: var(--colour-danger);
+  margin-left: 0;
+  font-weight: 600;
+}
