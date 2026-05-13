@@ -20,6 +20,13 @@ export default function Automations() {
       description="Visual workflows that send the right email at the right moment — without you lifting a finger."
       icon={Workflow}
       createLabel="New automation"
+      tableKey="automations"
+      mobileConfig={{
+        mobileTitleKey: 'name',
+        mobileSubtitleKey: 'trigger',
+        mobileBadgeKey: 'status',
+        mobileDetailKeys: ['steps', 'contacts'],
+      }}
       stats={[
         { label: 'Running', value: '6', icon: Activity, tone: 'from-emerald-500 to-teal-500' },
         { label: 'Paused', value: '2', icon: PauseCircle, tone: 'from-amber-500 to-orange-500' },

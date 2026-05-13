@@ -73,6 +73,7 @@ export const LABELS = {
   // Mailwave specific
   campaign: 'Campaign',
   campaigns: 'Campaigns',
+  whatsappCampaigns: 'WhatsApp Campaigns',
   template: 'Template',
   templates: 'Templates',
   contact: 'Contact',
@@ -91,6 +92,8 @@ export const LABELS = {
   apiIntegrations: 'API Integrations',
   auditLogs: 'Audit Logs',
   rolePermissions: 'Role Permissions',
+  platformRbac: 'Platform RBAC',
+  teamPermissions: 'Team Permissions',
   teamMembers: 'Team Members',
   plans: 'Plans',
   tenants: 'Tenants / Organisations',

@@ -6,6 +6,10 @@ import { ThemeProvider } from './context/ThemeContext.jsx';
 import { AuthProvider } from './context/AuthContext.jsx';
 import { NotificationProvider } from './context/NotificationContext.jsx';
 import { clearInvalidRememberedLoginData } from './utils/rememberMe.js';
+// Register the permission matrix with the module registry so
+// getNavigationForRole() can filter the sidebar without modules.js
+// itself depending on permissions.js (avoids a circular import).
+import './config/navigation.js';
 import './styles/theme.css';
 import './index.css';
 

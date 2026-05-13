@@ -3,6 +3,11 @@ import { findDemoUser, findDemoUserByEmail } from '../config/demoUsers.js';
 import { ROLES } from '../config/roles.js';
 import { ERROR_MESSAGES } from '../config/messages.js';
 import {
+  getUsers as getLocalUsers,
+  logoutUser as clearLocalSession,
+  setCurrentUser as persistLocalCurrentUser,
+} from '../services/local-auth-service.js';
+import {
   OAUTH_PROVIDERS,
   PROVIDER_LABELS,
   MOCK_OAUTH_ENABLED,
@@ -37,16 +42,65 @@ function loadStoredUser() {
   return null;
 }
 
+/**
+ * Mirror the session into the spec-named `mailwave_current_user` key so
+ * other services (and the spec contract) can read it. Keeping this in sync
+ * with the canonical `mailwave-auth` key lets refresh recover the session
+ * either way.
+ */
 function persist(user) {
   try {
     if (user) {
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
+      persistLocalCurrentUser({
+        id: user.id,
+        tenantId: user.tenantId,
+        fullName: user.fullName || user.name,
+        emailId: user.email,
+        role: user.role,
+        accountType: user.accountType,
+        selectedPlan: user.plan,
+        isAuthenticated: true,
+      });
     } else {
       window.localStorage.removeItem(STORAGE_KEY);
+      clearLocalSession();
     }
   } catch {
     /* ignore */
   }
+}
+
+function findLocalUser(email, password) {
+  if (!email) return null;
+  const normalised = email.trim().toLowerCase();
+  const list = getLocalUsers();
+  return (
+    list.find(
+      (u) =>
+        (u.emailId || '').toLowerCase() === normalised &&
+        u.passwordHashOrDemoPassword === password
+    ) || null
+  );
+}
+
+function localUserToRecord(localUser) {
+  const isOrg =
+    localUser.accountType === 'organisation' || localUser.accountType === 'organization';
+  return {
+    id: localUser.id,
+    email: localUser.emailId,
+    name: localUser.fullName,
+    fullName: localUser.fullName,
+    role: localUser.role,
+    tenantId: localUser.tenantId,
+    plan: localUser.selectedPlanName || localUser.selectedPlan || 'Starter',
+    accountType: isOrg ? 'organisation' : 'individual',
+    contactNumber: localUser.contactNumber || null,
+    mobileVerified: Boolean(localUser.contactNumber),
+    avatarUrl: null,
+    provider: 'password',
+  };
 }
 
 function buildUser(record, extras = {}) {
@@ -58,6 +112,7 @@ function buildUser(record, extras = {}) {
     role: record.role,
     tenantId: record.tenantId,
     plan: record.plan,
+    accountType: record.accountType || null,
     avatarUrl: record.avatarUrl || null,
     provider: record.provider || 'password',
     isAuthenticated: true,
@@ -99,6 +154,15 @@ export function AuthProvider({ children }) {
 
   const login = useCallback(async ({ email, password }) => {
     await new Promise((r) => setTimeout(r, 500));
+    // Local frontend simulation. Locally-registered users (mailwave_users)
+    // take precedence; we fall through to the built-in demo users so the
+    // Super Admin / role-test accounts continue to work.
+    const localMatch = findLocalUser(email, password);
+    if (localMatch) {
+      const next = buildUser(localUserToRecord(localMatch));
+      setUser(next);
+      return next;
+    }
     const match = findDemoUser(email, password);
     if (!match) {
       const err = new Error(ERROR_MESSAGES.invalidCredentials);

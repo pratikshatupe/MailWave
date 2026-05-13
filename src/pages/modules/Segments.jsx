@@ -20,6 +20,13 @@ export default function Segments() {
       description="Group contacts by behaviour, intent or attributes — and target them with precision."
       icon={Filter}
       createLabel="New segment"
+      tableKey="segments"
+      mobileConfig={{
+        mobileTitleKey: 'name',
+        mobileSubtitleKey: 'rule',
+        mobileBadgeKey: 'status',
+        mobileDetailKeys: ['size'],
+      }}
       stats={[
         { label: 'Total segments', value: '24', icon: Filter, tone: 'from-indigo-500 to-blue-500' },
         { label: 'Avg. size', value: '1,892', icon: Users, tone: 'from-fuchsia-500 to-pink-500' },

@@ -19,6 +19,13 @@ export default function Referrals() {
       description="Invite friends, teammates or peers and earn rewards every time they sign up."
       icon={Gift}
       createLabel="Invite someone"
+      tableKey="referrals"
+      mobileConfig={{
+        mobileTitleKey: 'referee',
+        mobileSubtitleKey: 'reward',
+        mobileBadgeKey: 'status',
+        mobileDetailKeys: ['date'],
+      }}
       stats={[
         { label: 'Total referrals', value: '12', icon: Users, tone: 'from-indigo-500 to-blue-500' },
         { label: 'Rewards earned', value: '$240', icon: Wallet, tone: 'from-emerald-500 to-teal-500' },

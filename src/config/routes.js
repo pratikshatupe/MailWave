@@ -30,6 +30,7 @@ export const ROUTES = {
   // Authenticated app shell paths (rendered under /app)
   dashboard: '/app/dashboard',
   campaigns: '/app/campaigns',
+  whatsappCampaigns: '/app/whatsapp-campaigns',
   templates: '/app/templates',
   contacts: '/app/contacts',
   segments: '/app/segments',
@@ -45,6 +46,8 @@ export const ROUTES = {
   apiIntegrations: '/app/api-integrations',
   auditLogs: '/app/audit-logs',
   rolePermissions: '/app/role-permissions',
+  platformRbac: '/app/platform-rbac',
+  teamPermissions: '/app/team-permissions',
   teamMembers: '/app/team',
   approvalWorkflow: '/app/approvals',
   plans: '/app/plans',

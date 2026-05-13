@@ -19,8 +19,13 @@ export default function Billing() {
       description="Invoices, payment methods and tax info — all powered by Razorpay."
       icon={Receipt}
       createLabel="Add payment method"
-      showSearch={false}
-      showFilter={false}
+      tableKey="billingInvoices"
+      mobileConfig={{
+        mobileTitleKey: 'id',
+        mobileSubtitleKey: 'method',
+        mobileBadgeKey: 'status',
+        mobileDetailKeys: ['amount', 'date'],
+      }}
       stats={[
         { label: 'Next invoice', value: '$899', delta: 'Jun 1, 2026', icon: Wallet, tone: 'from-indigo-500 to-fuchsia-500' },
         { label: 'Lifetime spend', value: '$8,990', icon: Receipt, tone: 'from-emerald-500 to-teal-500' },

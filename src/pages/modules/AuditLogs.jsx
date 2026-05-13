@@ -20,7 +20,13 @@ export default function AuditLogs() {
       title="Audit Logs"
       description="Tamper-evident record of every privileged action across the platform."
       icon={ScrollText}
-      showFilter
+      tableKey="auditLogs"
+      mobileConfig={{
+        mobileTitleKey: 'action',
+        mobileSubtitleKey: 'actor',
+        mobileBadgeKey: 'level',
+        mobileDetailKeys: ['target', 'ip', 'when'],
+      }}
       stats={[
         { label: 'Events (24h)', value: '1,284', icon: ScrollText, tone: 'from-indigo-500 to-blue-500' },
         { label: 'Critical events', value: '3', icon: AlertTriangle, deltaTone: 'negative', tone: 'from-rose-500 to-orange-500' },

@@ -1,4 +1,4 @@
-import { Plus, Search, Filter, Download } from 'lucide-react';
+import { Plus, Download, Upload, Megaphone } from 'lucide-react';
 import PageHeader from './PageHeader.jsx';
 import StatCard from './StatCard.jsx';
 import DataTable from './DataTable.jsx';
@@ -6,12 +6,25 @@ import Button from './Button.jsx';
 import Badge from './Badge.jsx';
 import EmptyState from './EmptyState.jsx';
 import { useAuth } from '../../context/AuthContext.jsx';
-import { can, ACTIONS, isReadOnly } from '../../config/permissions.js';
+import {
+  can,
+  ACTIONS,
+  isReadOnly,
+} from '../../config/permissions.js';
 
 /**
  * Generic role-aware module page used for placeholder modules. Each module
  * just declares its title, description, KPIs, table columns and seed rows;
  * action buttons appear/disappear based on the role's permission matrix.
+ *
+ * Buttons rendered here are matrix-gated:
+ *   - Export   → canExport
+ *   - Import   → canImport
+ *   - Create   → canCreate or canManage
+ *   - Broadcast→ canBroadcast (e.g. announcements / notifications)
+ *
+ * The DataTable receives `module` so inline edit + per-row actions can
+ * derive their own gating via isReadOnly() in the central table.
  */
 export default function ModulePage({
   module,
@@ -22,13 +35,23 @@ export default function ModulePage({
   stats = [],
   columns = [],
   rows = [],
+  tableKey,
+  mobileConfig,
+  actions,
+  actionHandlers,
+  actionPermissions,
   createLabel = 'Create new',
   onCreate,
   emptyTitle = 'Nothing here yet',
   emptyDescription = 'When data is available it will appear here.',
-  showSearch = true,
-  showFilter = true,
   showExport = true,
+  onExport,
+  showImport = false,
+  importLabel = 'Import',
+  onImport,
+  showBroadcast = false,
+  broadcastLabel = 'Broadcast',
+  onBroadcast,
   extraActions,
   children,
 }) {
@@ -36,11 +59,25 @@ export default function ModulePage({
   const readOnly = isReadOnly(role, module);
   const canCreate = can(role, module, ACTIONS.CREATE) || can(role, module, ACTIONS.MANAGE);
   const canExport = can(role, module, ACTIONS.EXPORT);
+  const canImport = can(role, module, ACTIONS.IMPORT);
+  const canBroadcast = can(role, module, ACTIONS.BROADCAST);
 
   const headerActions = (
     <>
       {showExport && canExport && (
-        <Button variant="ghost"><Download className="h-4 w-4" /> Export</Button>
+        <Button variant="ghost" onClick={onExport}>
+          <Download className="h-4 w-4" /> Export
+        </Button>
+      )}
+      {showImport && canImport && (
+        <Button variant="outline" onClick={onImport}>
+          <Upload className="h-4 w-4" /> {importLabel}
+        </Button>
+      )}
+      {showBroadcast && canBroadcast && (
+        <Button variant="outline" onClick={onBroadcast}>
+          <Megaphone className="h-4 w-4" /> {broadcastLabel}
+        </Button>
       )}
       {canCreate && (
         <Button onClick={onCreate}>
@@ -85,29 +122,20 @@ export default function ModulePage({
         </div>
       )}
 
-      {(showSearch || showFilter) && (
-        <div className="flex flex-wrap items-center gap-2">
-          {showSearch && (
-            <div className="relative flex-1 min-w-[240px]">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-              <input
-                placeholder={`Search ${title.toLowerCase()}…`}
-                className="input-base !py-2.5 pl-10"
-              />
-            </div>
-          )}
-          {showFilter && (
-            <Button variant="ghost">
-              <Filter className="h-4 w-4" /> Filter
-            </Button>
-          )}
-        </div>
-      )}
-
       {children}
 
       {columns.length > 0 && rows.length > 0 && (
-        <DataTable columns={columns} rows={rows} />
+        <DataTable
+          columns={columns}
+          rows={rows}
+          tableKey={tableKey}
+          mobileConfig={mobileConfig}
+          actions={actions}
+          actionHandlers={actionHandlers}
+          actionPermissions={actionPermissions}
+          role={role}
+          module={module}
+        />
       )}
 
       {columns.length > 0 && rows.length === 0 && (

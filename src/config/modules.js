@@ -1,9 +1,13 @@
 /**
  * modules.js
  *
- * Central module registry. The sidebar, route guards and permission system
- * are all derived from this file. Adding / removing a module here is the
- * single source of change.
+ * Central module registry. The sidebar, route guards and the action
+ * gates inside the UI are all derived from this file. Adding or removing
+ * a module here is the single source of change.
+ *
+ * `getNavigationForRole(role)` filters the registry by view permission
+ * from config/permissions.js, so the sidebar is matrix-driven and never
+ * hardcoded inside sidebar.jsx.
  */
 
 import {
@@ -14,6 +18,7 @@ import {
   CreditCard,
   Wallet,
   Mail,
+  MessageSquare,
   LayoutTemplate,
   Contact,
   Filter,
@@ -46,6 +51,7 @@ export const MODULE_KEYS = {
   SUBSCRIPTIONS: 'subscriptions',
   PAYMENTS: 'payments',
   CAMPAIGNS: 'campaigns',
+  WHATSAPP_CAMPAIGNS: 'whatsapp_campaigns',
   TEMPLATES: 'templates',
   CONTACTS: 'contacts',
   SEGMENTS: 'segments',
@@ -56,21 +62,41 @@ export const MODULE_KEYS = {
   ANNOUNCEMENTS: 'announcements',
   COUPONS: 'coupons',
   REFERRALS: 'referrals',
-  API_INTEGRATIONS: 'api_integrations',
-  AUDIT_LOGS: 'audit_logs',
-  ROLE_PERMISSIONS: 'role_permissions',
-  SETTINGS: 'settings',
+  SUBSCRIPTION: 'subscription',
   BILLING: 'billing',
   TEAM_MEMBERS: 'team_members',
   APPROVAL_WORKFLOW: 'approval_workflow',
+  API_INTEGRATIONS: 'api_integrations',
+  AUDIT_LOGS: 'audit_logs',
+  ROLE_PERMISSIONS: 'role_permissions',
+  PLATFORM_RBAC: 'platform_rbac',
+  TEAM_PERMISSIONS: 'team_permissions',
+  SETTINGS: 'settings',
   EMAIL_TRACKING: 'email_tracking',
   EMAIL_SENDING_ENGINE: 'email_sending_engine',
   RAZORPAY_INTEGRATION: 'razorpay_integration',
   SEVEN_DAY_FREE_TRIAL: 'seven_day_free_trial',
-  SUBSCRIPTION: 'subscription',
   PROFILE: 'profile',
   CHANGE_PASSWORD: 'change_password',
 };
+
+/**
+ * Tenant-level module feature flags. Drives conditional UI such as the
+ * WhatsApp section inside the Add Contact form. In a real product these
+ * would come from the tenant subscription / plan add-ons; for the local
+ * demo they live here so the wiring is in one place.
+ */
+export const MODULE_FEATURES = {
+  [MODULE_KEYS.WHATSAPP_CAMPAIGNS]: true,
+};
+
+export function isModuleEnabled(moduleKey) {
+  return Boolean(MODULE_FEATURES[moduleKey]);
+}
+
+export function isWhatsappCampaignsEnabled() {
+  return isModuleEnabled(MODULE_KEYS.WHATSAPP_CAMPAIGNS);
+}
 
 const ALL_ROLES = Object.values(ROLES);
 const BUSINESS_ROLES = [ROLES.SUPER_ADMIN, ROLES.BUSINESS_ADMIN];
@@ -91,12 +117,18 @@ const CREATE = 'create';
 const EDIT = 'edit';
 const DELETE = 'delete';
 const EXPORT = 'export';
+const IMPORT = 'import';
 const APPROVE = 'approve';
 const MANAGE = 'manage';
+const BROADCAST = 'broadcast';
 
 /**
- * Module registry. Each entry is the source of truth for sidebar visibility,
- * routing, allowed roles and available actions.
+ * Module registry. Each entry documents the route, label, icon and the
+ * actions the module supports. The `allowedRoles` field is informational
+ * — the actual sidebar gate uses `hasModuleAccess(role, key)` from
+ * permissions.js so the matrix is the single source of truth.
+ *
+ * The order below is the canonical sidebar order rendered to every role.
  */
 export const MODULES = {
   [MODULE_KEYS.DASHBOARD]: {
@@ -108,7 +140,6 @@ export const MODULES = {
     allowedRoles: ALL_ROLES,
     actions: [VIEW],
     showInSidebar: true,
-    isReadOnlyForViewer: true,
   },
   [MODULE_KEYS.TENANTS]: {
     moduleKey: MODULE_KEYS.TENANTS,
@@ -117,9 +148,8 @@ export const MODULES = {
     icon: Building2,
     description: 'Manage tenants and customer organisations.',
     allowedRoles: [ROLES.SUPER_ADMIN],
-    actions: [VIEW, CREATE, EDIT, DELETE, EXPORT, MANAGE],
+    actions: [VIEW, CREATE, EDIT, DELETE, MANAGE],
     showInSidebar: true,
-    isReadOnlyForViewer: false,
   },
   [MODULE_KEYS.USERS]: {
     moduleKey: MODULE_KEYS.USERS,
@@ -128,9 +158,8 @@ export const MODULES = {
     icon: UsersRound,
     description: 'Manage platform users across tenants.',
     allowedRoles: [ROLES.SUPER_ADMIN],
-    actions: [VIEW, CREATE, EDIT, DELETE, EXPORT, MANAGE],
+    actions: [VIEW, CREATE, EDIT, DELETE, MANAGE],
     showInSidebar: true,
-    isReadOnlyForViewer: false,
   },
   [MODULE_KEYS.PLANS]: {
     moduleKey: MODULE_KEYS.PLANS,
@@ -139,9 +168,8 @@ export const MODULES = {
     icon: Layers,
     description: 'Manage subscription plans and pricing tiers.',
     allowedRoles: [ROLES.SUPER_ADMIN],
-    actions: [VIEW, CREATE, EDIT, DELETE, EXPORT, MANAGE],
+    actions: [VIEW, CREATE, EDIT, DELETE, MANAGE],
     showInSidebar: true,
-    isReadOnlyForViewer: false,
   },
   [MODULE_KEYS.SUBSCRIPTIONS]: {
     moduleKey: MODULE_KEYS.SUBSCRIPTIONS,
@@ -150,9 +178,8 @@ export const MODULES = {
     icon: CreditCard,
     description: 'View all tenant subscriptions.',
     allowedRoles: [ROLES.SUPER_ADMIN],
-    actions: [VIEW, EDIT, EXPORT],
+    actions: [VIEW, EDIT, MANAGE],
     showInSidebar: true,
-    isReadOnlyForViewer: false,
   },
   [MODULE_KEYS.PAYMENTS]: {
     moduleKey: MODULE_KEYS.PAYMENTS,
@@ -163,7 +190,6 @@ export const MODULES = {
     allowedRoles: [ROLES.SUPER_ADMIN],
     actions: [VIEW, EXPORT],
     showInSidebar: true,
-    isReadOnlyForViewer: false,
   },
   [MODULE_KEYS.CAMPAIGNS]: {
     moduleKey: MODULE_KEYS.CAMPAIGNS,
@@ -174,7 +200,16 @@ export const MODULES = {
     allowedRoles: ALL_ROLES,
     actions: [VIEW, CREATE, EDIT, DELETE, EXPORT, APPROVE],
     showInSidebar: true,
-    isReadOnlyForViewer: true,
+  },
+  [MODULE_KEYS.WHATSAPP_CAMPAIGNS]: {
+    moduleKey: MODULE_KEYS.WHATSAPP_CAMPAIGNS,
+    label: LABELS.whatsappCampaigns,
+    route: ROUTES.whatsappCampaigns,
+    icon: MessageSquare,
+    description: 'WhatsApp broadcast campaigns and templates.',
+    allowedRoles: ALL_ROLES,
+    actions: [VIEW, CREATE, EDIT, DELETE, EXPORT],
+    showInSidebar: true,
   },
   [MODULE_KEYS.TEMPLATES]: {
     moduleKey: MODULE_KEYS.TEMPLATES,
@@ -185,7 +220,6 @@ export const MODULES = {
     allowedRoles: INDIVIDUAL_PLUS,
     actions: [VIEW, CREATE, EDIT, DELETE],
     showInSidebar: true,
-    isReadOnlyForViewer: true,
   },
   [MODULE_KEYS.CONTACTS]: {
     moduleKey: MODULE_KEYS.CONTACTS,
@@ -194,9 +228,8 @@ export const MODULES = {
     icon: Contact,
     description: 'Contact lists, imports and contact details.',
     allowedRoles: ALL_ROLES,
-    actions: [VIEW, CREATE, EDIT, DELETE, EXPORT],
+    actions: [VIEW, CREATE, EDIT, DELETE, IMPORT, EXPORT],
     showInSidebar: true,
-    isReadOnlyForViewer: true,
   },
   [MODULE_KEYS.SEGMENTS]: {
     moduleKey: MODULE_KEYS.SEGMENTS,
@@ -207,7 +240,6 @@ export const MODULES = {
     allowedRoles: INDIVIDUAL_PLUS,
     actions: [VIEW, CREATE, EDIT, DELETE],
     showInSidebar: true,
-    isReadOnlyForViewer: false,
   },
   [MODULE_KEYS.AUTOMATIONS]: {
     moduleKey: MODULE_KEYS.AUTOMATIONS,
@@ -218,7 +250,6 @@ export const MODULES = {
     allowedRoles: INDIVIDUAL_PLUS,
     actions: [VIEW, CREATE, EDIT, DELETE],
     showInSidebar: true,
-    isReadOnlyForViewer: false,
   },
   [MODULE_KEYS.ANALYTICS]: {
     moduleKey: MODULE_KEYS.ANALYTICS,
@@ -229,7 +260,6 @@ export const MODULES = {
     allowedRoles: ALL_ROLES,
     actions: [VIEW, EXPORT],
     showInSidebar: true,
-    isReadOnlyForViewer: true,
   },
   [MODULE_KEYS.REPORTS]: {
     moduleKey: MODULE_KEYS.REPORTS,
@@ -240,7 +270,6 @@ export const MODULES = {
     allowedRoles: ALL_ROLES,
     actions: [VIEW, EXPORT],
     showInSidebar: true,
-    isReadOnlyForViewer: true,
   },
   [MODULE_KEYS.NOTIFICATIONS]: {
     moduleKey: MODULE_KEYS.NOTIFICATIONS,
@@ -249,9 +278,8 @@ export const MODULES = {
     icon: Bell,
     description: 'System and campaign notifications.',
     allowedRoles: ALL_ROLES,
-    actions: [VIEW, EDIT],
+    actions: [VIEW, BROADCAST, MANAGE],
     showInSidebar: true,
-    isReadOnlyForViewer: true,
   },
   [MODULE_KEYS.ANNOUNCEMENTS]: {
     moduleKey: MODULE_KEYS.ANNOUNCEMENTS,
@@ -260,9 +288,8 @@ export const MODULES = {
     icon: Megaphone,
     description: 'Platform-wide announcements.',
     allowedRoles: BUSINESS_ROLES,
-    actions: [VIEW, CREATE, EDIT, DELETE],
+    actions: [VIEW, CREATE, EDIT, DELETE, BROADCAST, MANAGE],
     showInSidebar: true,
-    isReadOnlyForViewer: false,
   },
   [MODULE_KEYS.COUPONS]: {
     moduleKey: MODULE_KEYS.COUPONS,
@@ -270,10 +297,9 @@ export const MODULES = {
     route: ROUTES.coupons,
     icon: Ticket,
     description: 'Discount coupons and promotions.',
-    allowedRoles: INDIVIDUAL_PLUS,
-    actions: [VIEW, CREATE, EDIT, DELETE],
+    allowedRoles: [ROLES.SUPER_ADMIN, ROLES.BUSINESS_ADMIN, ROLES.INDIVIDUAL],
+    actions: [VIEW, CREATE, EDIT, DELETE, MANAGE],
     showInSidebar: true,
-    isReadOnlyForViewer: false,
   },
   [MODULE_KEYS.REFERRALS]: {
     moduleKey: MODULE_KEYS.REFERRALS,
@@ -282,9 +308,48 @@ export const MODULES = {
     icon: Gift,
     description: 'Referral programme and rewards.',
     allowedRoles: INDIVIDUAL_PLUS,
-    actions: [VIEW, CREATE, EDIT, DELETE],
+    actions: [VIEW, CREATE, EDIT, DELETE, EXPORT],
     showInSidebar: true,
-    isReadOnlyForViewer: false,
+  },
+  [MODULE_KEYS.SUBSCRIPTION]: {
+    moduleKey: MODULE_KEYS.SUBSCRIPTION,
+    label: LABELS.subscription,
+    route: ROUTES.subscription,
+    icon: CreditCard,
+    description: 'Plan, usage and renewal status.',
+    allowedRoles: [ROLES.BUSINESS_ADMIN, ROLES.INDIVIDUAL],
+    actions: [VIEW, EDIT, MANAGE],
+    showInSidebar: true,
+  },
+  [MODULE_KEYS.BILLING]: {
+    moduleKey: MODULE_KEYS.BILLING,
+    label: LABELS.billing,
+    route: ROUTES.billing,
+    icon: Receipt,
+    description: 'Invoices, payment methods and billing history.',
+    allowedRoles: [ROLES.SUPER_ADMIN, ROLES.BUSINESS_ADMIN, ROLES.INDIVIDUAL],
+    actions: [VIEW, EDIT, EXPORT, MANAGE],
+    showInSidebar: true,
+  },
+  [MODULE_KEYS.TEAM_MEMBERS]: {
+    moduleKey: MODULE_KEYS.TEAM_MEMBERS,
+    label: LABELS.teamMembers,
+    route: ROUTES.teamMembers,
+    icon: UsersRound,
+    description: 'Invite, manage and revoke team members.',
+    allowedRoles: [ROLES.BUSINESS_ADMIN],
+    actions: [VIEW, CREATE, EDIT, DELETE, MANAGE],
+    showInSidebar: true,
+  },
+  [MODULE_KEYS.APPROVAL_WORKFLOW]: {
+    moduleKey: MODULE_KEYS.APPROVAL_WORKFLOW,
+    label: LABELS.approvalWorkflow,
+    route: ROUTES.approvalWorkflow,
+    icon: ClipboardCheck,
+    description: 'Approval workflow for campaigns before sending.',
+    allowedRoles: [ROLES.BUSINESS_ADMIN],
+    actions: [VIEW, CREATE, EDIT, DELETE, APPROVE, MANAGE],
+    showInSidebar: true,
   },
   [MODULE_KEYS.API_INTEGRATIONS]: {
     moduleKey: MODULE_KEYS.API_INTEGRATIONS,
@@ -292,10 +357,9 @@ export const MODULES = {
     route: ROUTES.apiIntegrations,
     icon: Plug,
     description: 'Webhooks, REST keys and third-party integrations.',
-    allowedRoles: INDIVIDUAL_PLUS,
-    actions: [VIEW, CREATE, EDIT, DELETE],
+    allowedRoles: [ROLES.SUPER_ADMIN, ROLES.BUSINESS_ADMIN, ROLES.INDIVIDUAL],
+    actions: [VIEW, CREATE, EDIT, DELETE, MANAGE],
     showInSidebar: true,
-    isReadOnlyForViewer: false,
   },
   [MODULE_KEYS.AUDIT_LOGS]: {
     moduleKey: MODULE_KEYS.AUDIT_LOGS,
@@ -306,18 +370,26 @@ export const MODULES = {
     allowedRoles: [ROLES.SUPER_ADMIN],
     actions: [VIEW, EXPORT],
     showInSidebar: true,
-    isReadOnlyForViewer: false,
   },
-  [MODULE_KEYS.ROLE_PERMISSIONS]: {
-    moduleKey: MODULE_KEYS.ROLE_PERMISSIONS,
-    label: LABELS.rolePermissions,
-    route: ROUTES.rolePermissions,
+  [MODULE_KEYS.PLATFORM_RBAC]: {
+    moduleKey: MODULE_KEYS.PLATFORM_RBAC,
+    label: LABELS.platformRbac,
+    route: ROUTES.platformRbac,
     icon: ShieldCheck,
-    description: 'RBAC matrix and permission management.',
+    description: 'Manage the global RBAC matrix for every role on the platform.',
     allowedRoles: [ROLES.SUPER_ADMIN],
-    actions: [VIEW, EDIT],
+    actions: [VIEW, EDIT, MANAGE],
     showInSidebar: true,
-    isReadOnlyForViewer: false,
+  },
+  [MODULE_KEYS.TEAM_PERMISSIONS]: {
+    moduleKey: MODULE_KEYS.TEAM_PERMISSIONS,
+    label: LABELS.teamPermissions,
+    route: ROUTES.teamPermissions,
+    icon: ShieldCheck,
+    description: 'Manage tenant team roles and module permissions inside this organisation.',
+    allowedRoles: [ROLES.BUSINESS_ADMIN],
+    actions: [VIEW, EDIT, MANAGE],
+    showInSidebar: true,
   },
   [MODULE_KEYS.SETTINGS]: {
     moduleKey: MODULE_KEYS.SETTINGS,
@@ -328,51 +400,6 @@ export const MODULES = {
     allowedRoles: ALL_ROLES,
     actions: [VIEW, EDIT],
     showInSidebar: true,
-    isReadOnlyForViewer: true,
-  },
-  [MODULE_KEYS.BILLING]: {
-    moduleKey: MODULE_KEYS.BILLING,
-    label: LABELS.billing,
-    route: ROUTES.billing,
-    icon: Receipt,
-    description: 'Invoices, payment methods and billing history.',
-    allowedRoles: INDIVIDUAL_PLUS,
-    actions: [VIEW, EXPORT, MANAGE],
-    showInSidebar: true,
-    isReadOnlyForViewer: false,
-  },
-  [MODULE_KEYS.SUBSCRIPTION]: {
-    moduleKey: MODULE_KEYS.SUBSCRIPTION,
-    label: LABELS.subscription,
-    route: ROUTES.subscription,
-    icon: CreditCard,
-    description: 'Plan, usage and renewal status.',
-    allowedRoles: INDIVIDUAL_PLUS,
-    actions: [VIEW, EDIT, MANAGE],
-    showInSidebar: true,
-    isReadOnlyForViewer: false,
-  },
-  [MODULE_KEYS.TEAM_MEMBERS]: {
-    moduleKey: MODULE_KEYS.TEAM_MEMBERS,
-    label: LABELS.teamMembers,
-    route: ROUTES.teamMembers,
-    icon: UsersRound,
-    description: 'Invite, manage and revoke team members.',
-    allowedRoles: BUSINESS_ROLES,
-    actions: [VIEW, CREATE, EDIT, DELETE],
-    showInSidebar: true,
-    isReadOnlyForViewer: false,
-  },
-  [MODULE_KEYS.APPROVAL_WORKFLOW]: {
-    moduleKey: MODULE_KEYS.APPROVAL_WORKFLOW,
-    label: LABELS.approvalWorkflow,
-    route: ROUTES.approvalWorkflow,
-    icon: ClipboardCheck,
-    description: 'Approval workflow for campaigns before sending.',
-    allowedRoles: BUSINESS_ROLES,
-    actions: [VIEW, CREATE, EDIT, DELETE, APPROVE],
-    showInSidebar: true,
-    isReadOnlyForViewer: false,
   },
   [MODULE_KEYS.PROFILE]: {
     moduleKey: MODULE_KEYS.PROFILE,
@@ -383,7 +410,6 @@ export const MODULES = {
     allowedRoles: ALL_ROLES,
     actions: [VIEW, EDIT],
     showInSidebar: false,
-    isReadOnlyForViewer: false,
   },
   [MODULE_KEYS.CHANGE_PASSWORD]: {
     moduleKey: MODULE_KEYS.CHANGE_PASSWORD,
@@ -394,26 +420,58 @@ export const MODULES = {
     allowedRoles: ALL_ROLES,
     actions: [VIEW, EDIT],
     showInSidebar: false,
-    isReadOnlyForViewer: false,
   },
 };
 
 export const MODULE_LIST = Object.values(MODULES);
 
 /**
- * Build sidebar navigation for a given role from the module registry.
- * Replaces the older NAVIGATION lookup table.
+ * Build sidebar navigation for a given role.
+ *
+ * The actual matrix-driven filter lives in config/navigation.js to keep
+ * modules.js free of any dependency on permissions.js (avoiding the
+ * permissions <-> modules import cycle). This wrapper preserves the
+ * call site `getNavigationForRole(role)` for components that already
+ * import from modules.js.
  */
 export function getNavigationForRole(role) {
+  // Lazy import to keep this file free of permissions.js at module-load
+  // time. Permissions and modules each declare their independence and
+  // navigation.js wires them together.
+  // eslint-disable-next-line global-require
+  const { hasModuleAccess, isReadOnly } = requirePermissions();
   return MODULE_LIST.filter(
-    (m) => m.showInSidebar && m.allowedRoles.includes(role)
+    (m) => m.showInSidebar && hasModuleAccess(role, m.moduleKey)
   ).map((m) => ({
     label: m.label,
     to: m.route,
     icon: m.icon,
     module: m.moduleKey,
-    readOnly: m.isReadOnlyForViewer && role === ROLES.VIEWER,
+    readOnly: isReadOnly(role, m.moduleKey),
   }));
+}
+
+// Synchronous lazy resolver. The permissions module is fully evaluated
+// by the time the first navigation call fires (which always happens
+// during a React render, well after both files have loaded).
+let _permissions = null;
+function requirePermissions() {
+  if (_permissions) return _permissions;
+  // Vite resolves this at build time; under Node ESM tests we wire it
+  // through the already-evaluated module cache by going through a
+  // dynamic import in setNavigationPermissions().
+  _permissions = globalThis.__mailwavePermissions || null;
+  if (!_permissions) {
+    throw new Error(
+      'Permissions module not registered yet. Call setNavigationPermissions() (or import config/navigation.js) before using getNavigationForRole.'
+    );
+  }
+  return _permissions;
+}
+
+export function setNavigationPermissions(api) {
+  _permissions = api;
+  globalThis.__mailwavePermissions = api;
 }
 
 export function getModule(moduleKey) {

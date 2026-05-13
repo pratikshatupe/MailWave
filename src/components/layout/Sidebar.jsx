@@ -1,4 +1,4 @@
-import { LogOut, X } from 'lucide-react';
+import { LogOut, X, Lock } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import Logo from '../common/Logo.jsx';
 import { useAuth } from '../../context/AuthContext.jsx';
@@ -7,6 +7,18 @@ import { ROLE_BADGES, getRoleLabel } from '../../config/roles.js';
 import { LABELS } from '../../config/labels.js';
 import { ROUTES } from '../../config/routes.js';
 
+/**
+ * Sidebar
+ *
+ * Items are derived from the central module registry via
+ * getNavigationForRole(role), which itself filters through the RBAC
+ * matrix. No item is hardcoded here — adding or removing a module is a
+ * single-file change in modules.js / permissions.js.
+ *
+ * Each nav item exposes a `readOnly` hint (true when the role only has
+ * view / export on the module). A small Lock icon is shown so users
+ * understand why write actions are missing once they open the page.
+ */
 function NavItem({ item, onNavigate }) {
   const Icon = item.icon;
   return (
@@ -24,6 +36,12 @@ function NavItem({ item, onNavigate }) {
     >
       <Icon className="h-4 w-4 flex-shrink-0" />
       <span className="truncate">{item.label}</span>
+      {item.readOnly && (
+        <Lock
+          className="ml-auto h-3 w-3 flex-shrink-0 text-slate-400"
+          aria-label="Read only"
+        />
+      )}
     </NavLink>
   );
 }
@@ -48,7 +66,7 @@ export default function Sidebar({ open, onClose, onLogout }) {
 
       <nav className="flex-1 space-y-1 overflow-y-auto px-3 pb-4">
         {items.map((item) => (
-          <NavItem key={item.to + item.label} item={item} onNavigate={onClose} />
+          <NavItem key={item.module} item={item} onNavigate={onClose} />
         ))}
       </nav>
 

@@ -12,8 +12,14 @@ import DashboardLayout from '../components/layout/DashboardLayout.jsx';
 
 import Dashboard from '../pages/dashboard/Dashboard.jsx';
 import Campaigns from '../pages/modules/Campaigns.jsx';
+import WhatsappCampaigns from '../pages/modules/WhatsappCampaigns.jsx';
 import Templates from '../pages/modules/Templates.jsx';
-import Contacts from '../pages/modules/Contacts.jsx';
+import Contacts from '../pages/modules/contacts.jsx';
+import ContactDetails from '../pages/modules/contact-details.jsx';
+import ContactImport from '../pages/modules/contact-import.jsx';
+import ContactSegments from '../pages/modules/contact-segments.jsx';
+import ContactTags from '../pages/modules/contact-tags.jsx';
+import UnsubscribedContacts from '../pages/modules/unsubscribed-contacts.jsx';
 import Segments from '../pages/modules/Segments.jsx';
 import Automations from '../pages/modules/Automations.jsx';
 import Analytics from '../pages/modules/Analytics.jsx';
@@ -27,6 +33,8 @@ import Billing from '../pages/modules/Billing.jsx';
 import ApiIntegrations from '../pages/modules/ApiIntegrations.jsx';
 import AuditLogs from '../pages/modules/AuditLogs.jsx';
 import RolePermissions from '../pages/modules/RolePermissions.jsx';
+import PlatformRbac from '../pages/modules/platform-rbac.jsx';
+import TeamPermissions from '../pages/modules/team-permissions.jsx';
 import TeamMembers from '../pages/modules/TeamMembers.jsx';
 import ApprovalWorkflow from '../pages/modules/ApprovalWorkflow.jsx';
 import Plans from '../pages/modules/Plans.jsx';
@@ -85,12 +93,36 @@ export default function AppRoutes() {
           element={<ModuleRoute module={MODULE_KEYS.CAMPAIGNS}><Campaigns /></ModuleRoute>}
         />
         <Route
+          path={seg(ROUTES.whatsappCampaigns)}
+          element={<ModuleRoute module={MODULE_KEYS.WHATSAPP_CAMPAIGNS}><WhatsappCampaigns /></ModuleRoute>}
+        />
+        <Route
           path={seg(ROUTES.templates)}
           element={<ModuleRoute module={MODULE_KEYS.TEMPLATES}><Templates /></ModuleRoute>}
         />
         <Route
           path={seg(ROUTES.contacts)}
           element={<ModuleRoute module={MODULE_KEYS.CONTACTS}><Contacts /></ModuleRoute>}
+        />
+        <Route
+          path={`${seg(ROUTES.contacts)}/import`}
+          element={<ModuleRoute module={MODULE_KEYS.CONTACTS}><ContactImport /></ModuleRoute>}
+        />
+        <Route
+          path={`${seg(ROUTES.contacts)}/segments`}
+          element={<ModuleRoute module={MODULE_KEYS.CONTACTS}><ContactSegments /></ModuleRoute>}
+        />
+        <Route
+          path={`${seg(ROUTES.contacts)}/tags`}
+          element={<ModuleRoute module={MODULE_KEYS.CONTACTS}><ContactTags /></ModuleRoute>}
+        />
+        <Route
+          path={`${seg(ROUTES.contacts)}/unsubscribed`}
+          element={<ModuleRoute module={MODULE_KEYS.CONTACTS}><UnsubscribedContacts /></ModuleRoute>}
+        />
+        <Route
+          path={`${seg(ROUTES.contacts)}/:id`}
+          element={<ModuleRoute module={MODULE_KEYS.CONTACTS}><ContactDetails /></ModuleRoute>}
         />
         <Route
           path={seg(ROUTES.segments)}
@@ -141,8 +173,16 @@ export default function AppRoutes() {
           element={<ModuleRoute module={MODULE_KEYS.AUDIT_LOGS}><AuditLogs /></ModuleRoute>}
         />
         <Route
+          path={seg(ROUTES.platformRbac)}
+          element={<ModuleRoute module={MODULE_KEYS.PLATFORM_RBAC}><PlatformRbac /></ModuleRoute>}
+        />
+        <Route
+          path={seg(ROUTES.teamPermissions)}
+          element={<ModuleRoute module={MODULE_KEYS.TEAM_PERMISSIONS}><TeamPermissions /></ModuleRoute>}
+        />
+        <Route
           path={seg(ROUTES.rolePermissions)}
-          element={<ModuleRoute module={MODULE_KEYS.ROLE_PERMISSIONS}><RolePermissions /></ModuleRoute>}
+          element={<RolePermissions />}
         />
         <Route
           path={seg(ROUTES.teamMembers)}

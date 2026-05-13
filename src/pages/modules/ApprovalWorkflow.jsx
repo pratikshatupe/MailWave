@@ -20,6 +20,12 @@ export default function ApprovalWorkflow() {
       description="Review and approve campaigns, automations or templates before they go live."
       icon={ClipboardCheck}
       createLabel="New rule"
+      mobileConfig={{
+        mobileTitleKey: 'item',
+        mobileSubtitleKey: 'requester',
+        mobileBadgeKey: 'status',
+        mobileDetailKeys: ['requested', 'stage'],
+      }}
       stats={[
         { label: 'Pending', value: '2', icon: Hourglass, tone: 'from-amber-500 to-orange-500' },
         { label: 'Approved (7d)', value: '8', icon: ThumbsUp, tone: 'from-emerald-500 to-teal-500' },

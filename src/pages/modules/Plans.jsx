@@ -20,6 +20,13 @@ export default function Plans() {
       description="Configure SaaS subscription plans, pricing, quotas and trial behaviour."
       icon={Layers}
       createLabel="New plan"
+      tableKey="plans"
+      mobileConfig={{
+        mobileTitleKey: 'name',
+        mobileSubtitleKey: 'price',
+        mobileBadgeKey: 'status',
+        mobileDetailKeys: ['emails', 'contacts', 'tenants'],
+      }}
       stats={[
         { label: 'Total plans', value: '4', icon: Layers, tone: 'from-indigo-500 to-blue-500' },
         { label: 'Paying tenants', value: '242', icon: Users, tone: 'from-emerald-500 to-teal-500' },

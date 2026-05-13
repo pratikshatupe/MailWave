@@ -43,6 +43,7 @@ export const ERROR_MESSAGES = {
   termsRequired: 'You must agree to the Terms of Service and Privacy Policy.',
   whitespaceOnly: 'This value cannot be empty.',
   noRecords: 'No records found.',
+  emailAlreadyRegistered: 'This Email ID already exists.',
 };
 
 export const EMPTY_STATES = {

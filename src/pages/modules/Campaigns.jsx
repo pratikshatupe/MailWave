@@ -20,6 +20,13 @@ export default function Campaigns() {
       description="Create, schedule, send and track every email campaign across your workspace."
       icon={Mail}
       createLabel="New campaign"
+      tableKey="campaigns"
+      mobileConfig={{
+        mobileTitleKey: 'name',
+        mobileSubtitleKey: 'audience',
+        mobileBadgeKey: 'status',
+        mobileDetailKeys: ['sent', 'open', 'click', 'date'],
+      }}
       stats={[
         { label: 'Active', value: '8', delta: '+2 today', icon: Send, tone: 'from-indigo-500 to-blue-500' },
         { label: 'Scheduled', value: '3', delta: 'Next: tomorrow', icon: CalendarClock, tone: 'from-fuchsia-500 to-pink-500' },

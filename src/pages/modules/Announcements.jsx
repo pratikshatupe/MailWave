@@ -20,6 +20,13 @@ export default function Announcements() {
       description="Broadcast banners, modals or toasts. Target all users, a role, a plan or a single tenant."
       icon={Megaphone}
       createLabel="New announcement"
+      tableKey="announcements"
+      mobileConfig={{
+        mobileTitleKey: 'title',
+        mobileSubtitleKey: 'target',
+        mobileBadgeKey: 'status',
+        mobileDetailKeys: ['channel', 'published'],
+      }}
       stats={[
         { label: 'Live', value: '2', icon: Megaphone, tone: 'from-indigo-500 to-fuchsia-500' },
         { label: 'Total reach', value: '4,612', icon: Users, tone: 'from-emerald-500 to-teal-500' },

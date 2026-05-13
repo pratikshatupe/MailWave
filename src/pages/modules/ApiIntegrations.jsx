@@ -21,6 +21,13 @@ export default function ApiIntegrations() {
       description="Connect Mailwave to your stack — email providers, billing, analytics and your favorite tools."
       icon={Plug}
       createLabel="Add integration"
+      tableKey="apiIntegrations"
+      mobileConfig={{
+        mobileTitleKey: 'name',
+        mobileSubtitleKey: 'category',
+        mobileBadgeKey: 'status',
+        mobileDetailKeys: ['updated'],
+      }}
       stats={[
         { label: 'Active integrations', value: '7', icon: Plug, tone: 'from-indigo-500 to-blue-500' },
         { label: 'API keys', value: '3', icon: KeyRound, tone: 'from-fuchsia-500 to-pink-500' },

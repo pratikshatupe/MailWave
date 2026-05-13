@@ -21,6 +21,13 @@ export default function Payments() {
       description="All Razorpay and card transactions across the platform, with retries and refunds."
       icon={Wallet}
       createLabel="Manual charge"
+      tableKey="payments"
+      mobileConfig={{
+        mobileTitleKey: 'id',
+        mobileSubtitleKey: 'tenant',
+        mobileBadgeKey: 'status',
+        mobileDetailKeys: ['amount', 'method', 'date'],
+      }}
       stats={[
         { label: 'Succeeded (30d)', value: '$184,920', icon: CheckCircle2, tone: 'from-emerald-500 to-teal-500' },
         { label: 'Failed (30d)', value: '$1,420', deltaTone: 'negative', icon: AlertTriangle, tone: 'from-rose-500 to-orange-500' },

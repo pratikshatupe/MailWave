@@ -20,6 +20,13 @@ export default function Templates() {
       description="Reusable, on-brand email layouts you can drop into any campaign or automation."
       icon={LayoutTemplate}
       createLabel="New template"
+      tableKey="templates"
+      mobileConfig={{
+        mobileTitleKey: 'name',
+        mobileSubtitleKey: 'category',
+        mobileBadgeKey: 'status',
+        mobileDetailKeys: ['updated', 'author'],
+      }}
       stats={[
         { label: 'Total templates', value: '36', icon: LayoutTemplate, tone: 'from-indigo-500 to-blue-500' },
         { label: 'Drafts', value: '4', icon: FileEdit, tone: 'from-amber-500 to-orange-500' },

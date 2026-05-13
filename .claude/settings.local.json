@@ -5,7 +5,11 @@
       "Bash(npx vite *)",
       "Bash(npm run *)",
       "Bash(curl *)",
-      "Bash(findstr /i env)"
+      "Bash(findstr /i env)",
+      "Bash(npx eslint *)",
+      "Bash(node *)",
+      "Bash(pkill -f \"vite\")",
+      "Bash(pkill -f \"npm run dev\")"
     ]
   }
 }

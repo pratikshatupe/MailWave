@@ -17,6 +17,12 @@ export default function Reports() {
       description="Schedule, download and share workspace reports with your team or stakeholders."
       icon={FileBarChart}
       createLabel="New report"
+      tableKey="reports"
+      mobileConfig={{
+        mobileTitleKey: 'name',
+        mobileSubtitleKey: 'range',
+        mobileDetailKeys: ['size', 'author'],
+      }}
       stats={[
         { label: 'Saved reports', value: '14', icon: FileBarChart, tone: 'from-indigo-500 to-blue-500' },
         { label: 'Scheduled', value: '3', icon: Calendar, tone: 'from-fuchsia-500 to-pink-500' },

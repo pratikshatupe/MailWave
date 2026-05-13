@@ -20,6 +20,13 @@ export default function Coupons() {
       description="Create discount codes, gift offers and growth incentives — and track every redemption."
       icon={Ticket}
       createLabel="New coupon"
+      tableKey="coupons"
+      mobileConfig={{
+        mobileTitleKey: 'code',
+        mobileSubtitleKey: 'type',
+        mobileBadgeKey: 'status',
+        mobileDetailKeys: ['value', 'usage', 'expires'],
+      }}
       stats={[
         { label: 'Active coupons', value: '12', icon: BadgeCheck, tone: 'from-emerald-500 to-teal-500' },
         { label: 'Total redemptions', value: '2,440', icon: PercentCircle, tone: 'from-fuchsia-500 to-pink-500' },

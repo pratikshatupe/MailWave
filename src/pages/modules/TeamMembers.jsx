@@ -20,6 +20,13 @@ export default function TeamMembers() {
       description="Manage who can access your workspace and what they can do."
       icon={UsersRound}
       createLabel="Invite member"
+      tableKey="teamMembers"
+      mobileConfig={{
+        mobileTitleKey: 'name',
+        mobileSubtitleKey: 'email',
+        mobileBadgeKey: 'status',
+        mobileDetailKeys: ['role', 'joined'],
+      }}
       stats={[
         { label: 'Members', value: '12', icon: UsersRound, tone: 'from-indigo-500 to-blue-500' },
         { label: 'Active', value: '11', icon: UserCheck, tone: 'from-emerald-500 to-teal-500' },

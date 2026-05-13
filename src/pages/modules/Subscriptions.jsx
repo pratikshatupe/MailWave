@@ -20,6 +20,13 @@ export default function Subscriptions() {
       description="Every tenant subscription, cycle and renewal date — at a glance."
       icon={CreditCard}
       createLabel="Manual subscription"
+      tableKey="subscriptions"
+      mobileConfig={{
+        mobileTitleKey: 'tenant',
+        mobileSubtitleKey: 'plan',
+        mobileBadgeKey: 'status',
+        mobileDetailKeys: ['cycle', 'amount', 'next'],
+      }}
       stats={[
         { label: 'Active', value: '216', icon: CreditCard, tone: 'from-indigo-500 to-blue-500' },
         { label: 'On trial', value: '32', icon: Hourglass, tone: 'from-fuchsia-500 to-pink-500' },
