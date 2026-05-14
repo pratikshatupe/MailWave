@@ -9,6 +9,8 @@
  *  5. Invalid values surface a small inline error pill.
  *  6. Dropdown edits auto-flip upward when there is no space below and
  *     right-align near the screen edge so they never get clipped.
+ *  7. Multi-select editType opens a chip-picker popover so array fields
+ *     such as Tags / Segments can be edited inline.
  *
  * The cell respects role permissions: if `disabled` is true the trigger
  * is hidden and the value is rendered read-only.
@@ -38,13 +40,28 @@ function formatDisplay(value, column) {
     const found = options.find((o) => o.value === value);
     return found?.label ?? value;
   }
+  if (column.editType === 'multiselect') {
+    const list = Array.isArray(value) ? value : [];
+    if (list.length === 0) return '—';
+    return list.join(', ');
+  }
   return value;
+}
+
+function resolveOptions(column, row) {
+  if (column.editType !== 'select' && column.editType !== 'multiselect') return [];
+  if (typeof column.getOptions === 'function') {
+    const dyn = column.getOptions(row);
+    return Array.isArray(dyn) ? dyn.map((o) => (typeof o === 'string' ? { value: o, label: o } : o)) : [];
+  }
+  return getColumnOptions(column.options);
 }
 
 export default function InlineEditCell({
   value,
   column,
   rowId,
+  row,
   disabled = false,
   onSave,
   renderDisplay,
@@ -56,9 +73,15 @@ export default function InlineEditCell({
   const containerRef = useRef(null);
   const inputRef = useRef(null);
 
+  const isMultiSelect = column.editType === 'multiselect';
+
   const options = useMemo(
-    () => (column.editType === 'select' ? getColumnOptions(column.options) : []),
-    [column.editType, column.options]
+    () =>
+      column.editType === 'select' || isMultiSelect
+        ? resolveOptions(column, row)
+        : [],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [column.editType, column.options, column.getOptions, row, isMultiSelect]
   );
 
   const validator = useMemo(() => buildValidator(column), [column]);
@@ -83,7 +106,11 @@ export default function InlineEditCell({
 
   function startEdit() {
     if (disabled || !column.editable) return;
-    setDraft(value ?? '');
+    if (isMultiSelect) {
+      setDraft(Array.isArray(value) ? value.slice() : []);
+    } else {
+      setDraft(value ?? '');
+    }
     setError('');
     setEditing(true);
   }
@@ -92,6 +119,26 @@ export default function InlineEditCell({
     setEditing(false);
     setDraft(value);
     setError('');
+  }
+
+  function toggleMultiOption(opt) {
+    setDraft((prev) => {
+      const arr = Array.isArray(prev) ? prev : [];
+      return arr.includes(opt) ? arr.filter((x) => x !== opt) : [...arr, opt];
+    });
+  }
+
+  function saveMulti() {
+    const candidate = Array.isArray(draft) ? draft : [];
+    if (typeof onSave === 'function') {
+      const result = onSave(rowId, column.key, candidate);
+      if (result && result.ok === false) {
+        setError(result.error || 'Could not save value.');
+        return;
+      }
+    }
+    setError('');
+    setEditing(false);
   }
 
   function save(nextRaw) {
@@ -145,6 +192,64 @@ export default function InlineEditCell({
         >
           <Pencil className="h-3.5 w-3.5" />
         </button>
+      </span>
+    );
+  }
+
+  if (isMultiSelect) {
+    const selected = Array.isArray(draft) ? draft : [];
+    return (
+      <span
+        className="inline-edit-cell inline-edit-block w-full"
+        ref={containerRef}
+      >
+        <div
+          className={`inline-edit-multiselect ${
+            openUpward ? 'inline-edit-multiselect-up' : ''
+          }`}
+        >
+          {options.length === 0 ? (
+            <div className="inline-edit-multiselect-empty">No options available.</div>
+          ) : (
+            <div className="inline-edit-multiselect-options">
+              {options.map((opt) => {
+                const checked = selected.includes(opt.value);
+                return (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    className={`inline-edit-multiselect-chip ${checked ? 'is-active' : ''}`}
+                    onClick={() => toggleMultiOption(opt.value)}
+                  >
+                    {checked ? <Check className="h-3 w-3" /> : null}
+                    {opt.label}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+          <div className="inline-edit-multiselect-footer">
+            <button
+              type="button"
+              className="inline-edit-action-button is-cancel"
+              onClick={cancelEdit}
+              aria-label="Cancel"
+              title="Cancel"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+            <button
+              type="button"
+              className="inline-edit-action-button is-confirm"
+              onClick={saveMulti}
+              aria-label="Save"
+              title="Save"
+            >
+              <Check className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        </div>
+        {error && <span className="inline-edit-error">{error}</span>}
       </span>
     );
   }

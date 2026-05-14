@@ -39,7 +39,14 @@ export default function Payments() {
         { key: 'amount', label: 'Amount' },
         { key: 'method', label: 'Method' },
         { key: 'date', label: 'Date' },
-        { key: 'status', label: 'Status', render: (r) => <Badge tone={tone[r.status] || 'slate'}>{r.status}</Badge> },
+        {
+          key: 'status',
+          label: 'Status',
+          editable: true,
+          editType: 'select',
+          options: 'paymentStatus',
+          render: (r) => <Badge tone={tone[r.status] || 'slate'}>{r.status}</Badge>,
+        },
       ]}
       rows={rows}
     />

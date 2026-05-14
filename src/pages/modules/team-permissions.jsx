@@ -189,21 +189,19 @@ export default function TeamPermissions() {
           </div>
           <Badge tone="indigo">Read-only summary</Badge>
         </div>
-        <div className="overflow-x-auto">
-          <table className="min-w-full text-sm">
-            <thead className="bg-slate-50 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:bg-slate-900/60 dark:text-slate-400">
+        <div className="matrix-table-shell">
+          <table className="matrix-table">
+            <thead>
               <tr>
-                <th className="px-5 py-3">Module</th>
-                <th className="px-5 py-3">Allowed actions</th>
+                <th>Module</th>
+                <th>Allowed actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+            <tbody>
               {CONFIGURABLE_MODULES.map((mod) => (
-                <tr key={mod.key} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40">
-                  <td className="px-5 py-3 font-medium text-slate-900 dark:text-white">
-                    {mod.label}
-                  </td>
-                  <td className="px-5 py-3">
+                <tr key={mod.key}>
+                  <td>{mod.label}</td>
+                  <td>
                     <PermissionPill
                       allowed={PERMISSIONS[ROLES.BUSINESS_ADMIN]?.[mod.key] || []}
                     />
@@ -232,31 +230,26 @@ export default function TeamPermissions() {
             </div>
             <Badge tone="indigo">{CONFIGURABLE_MODULES.length} modules</Badge>
           </div>
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-sm">
-              <thead className="bg-slate-50 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:bg-slate-900/60 dark:text-slate-400">
+          <div className="matrix-table-shell">
+            <table className="matrix-table">
+              <thead>
                 <tr>
-                  <th className="px-5 py-3">Module</th>
+                  <th>Module</th>
                   {ACTION_COLUMNS.map((a) => (
-                    <th key={a} className="px-5 py-3 text-center">
+                    <th key={a} className="text-center">
                       {actionLabel(a)}
                     </th>
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+              <tbody>
                 {CONFIGURABLE_MODULES.map((mod) => (
-                  <tr
-                    key={mod.key}
-                    className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40"
-                  >
-                    <td className="px-5 py-3 font-medium text-slate-900 dark:text-white">
-                      {mod.label}
-                    </td>
+                  <tr key={mod.key}>
+                    <td>{mod.label}</td>
                     {ACTION_COLUMNS.map((a) => {
                       const checked = matrix[role][mod.key].has(a);
                       return (
-                        <td key={a} className="px-5 py-3 text-center">
+                        <td key={a} className="text-center">
                           <button
                             type="button"
                             onClick={() => toggle(role, mod.key, a)}

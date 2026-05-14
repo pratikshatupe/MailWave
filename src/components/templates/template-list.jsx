@@ -116,6 +116,13 @@ export default function TemplateList({
         key: 'status',
         label: 'Status',
         priority: 'high',
+        editable: true,
+        editType: 'select',
+        options: [
+          { value: 'draft', label: 'Draft', tone: 'slate' },
+          { value: 'published', label: 'Published', tone: 'emerald' },
+          { value: 'archived', label: 'Archived', tone: 'rose' },
+        ],
         render: (row) => (
           <Badge tone={STATUS_TONE[row.status] || 'slate'}>
             {row.status || 'draft'}
@@ -146,33 +153,30 @@ export default function TemplateList({
     [onPreview]
   );
 
+  // Row actions stay at View + Delete only across the product. Edit,
+  // duplicate, publish and archive happen via inline edit on the status
+  // / category / name fields, or from the template details page.
   const actions = useMemo(() => {
     const list = ['view'];
-    if (canEdit && !isReadOnly) list.push('edit');
-    if (canCreate && !isReadOnly) list.push('duplicate');
-    if (canPublish && !isReadOnly) list.push('publish');
-    if (canArchive && !isReadOnly) list.push('archive');
     if (canDelete && !isReadOnly) list.push('delete');
     return list;
-  }, [canEdit, canCreate, canDelete, canPublish, canArchive, isReadOnly]);
+  }, [canDelete, isReadOnly]);
 
   const actionHandlers = {
     view: (row) => onPreview?.(row),
-    edit: (row) => onEdit?.(row),
-    duplicate: (row) => onDuplicate?.(row),
     delete: (row) => onDelete?.(row),
-    publish: (row) => onPublish?.(row),
-    archive: (row) => onArchive?.(row),
   };
 
   return (
     <AppTable
+      tableKey="templates"
       columns={columns}
       rows={templates}
       rowKey="id"
       role={role}
       actions={actions}
       actionHandlers={actionHandlers}
+      displayMode="auto"
       mobileConfig={{
         mobileTitleKey: 'name',
         mobileSubtitleKey: 'subject',

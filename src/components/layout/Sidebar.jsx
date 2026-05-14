@@ -1,4 +1,4 @@
-import { X, Lock } from 'lucide-react';
+import { X } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import Logo from '../common/Logo.jsx';
 import { useAuth } from '../../context/AuthContext.jsx';
@@ -6,21 +6,9 @@ import { getNavigationForRole } from '../../config/modules.js';
 import { ROLE_BADGES, getRoleLabel } from '../../config/roles.js';
 import { ROUTES } from '../../config/routes.js';
 
-/**
- * Sidebar
- *
- * Items come from the central module registry via getNavigationForRole(role).
- *
- * Three render modes:
- *   - Desktop expanded:   full-width with logo + label + lock hint
- *   - Desktop collapsed:  narrow strip with icons only and hover tooltips
- *   - Mobile drawer:      overlay drawer shown when `open` is true
- *
- * The collapsed scrollbar is visually hidden but scroll still works
- * (utility class .sidebar-scroll, defined in index.css).
- */
 function NavItem({ item, onNavigate, collapsed }) {
   const Icon = item.icon;
+
   return (
     <NavLink
       to={item.to}
@@ -38,13 +26,9 @@ function NavItem({ item, onNavigate, collapsed }) {
       }
     >
       <Icon className="h-4 w-4 flex-shrink-0" />
+
       {!collapsed && <span className="truncate">{item.label}</span>}
-      {!collapsed && item.readOnly && (
-        <Lock
-          className="ml-auto h-3 w-3 flex-shrink-0 text-slate-400"
-          aria-label="Read only"
-        />
-      )}
+
       {collapsed && (
         <span
           className="pointer-events-none absolute left-full top-1/2 z-50 ml-2 hidden -translate-y-1/2 whitespace-nowrap rounded-lg bg-slate-900 px-2 py-1 text-xs font-semibold text-white shadow-card group-hover:block dark:bg-slate-800"
@@ -61,8 +45,6 @@ export default function Sidebar({ open, onClose }) {
   const { user, role } = useAuth();
   const items = getNavigationForRole(role);
   const badge = role ? ROLE_BADGES[role] : null;
-
-  // Desktop: when not open, render the icons-only "rail" instead of hiding.
   const collapsed = !open;
 
   const desktopInner = (
@@ -120,7 +102,11 @@ export default function Sidebar({ open, onClose }) {
               title={user?.name || 'User'}
             >
               {user?.avatarUrl ? (
-                <img src={user.avatarUrl} alt="Profile" className="h-full w-full object-cover" />
+                <img
+                  src={user.avatarUrl}
+                  alt="Profile"
+                  className="h-full w-full object-cover"
+                />
               ) : (
                 user?.avatarInitials || 'U'
               )}
@@ -130,15 +116,21 @@ export default function Sidebar({ open, onClose }) {
           <div className="flex items-center gap-3 rounded-xl bg-slate-50 p-3 dark:bg-slate-800/60">
             <span className="grid h-10 w-10 flex-shrink-0 place-items-center overflow-hidden rounded-full bg-gradient-to-br from-indigo-500 via-fuchsia-500 to-cyan-400 text-xs font-bold text-white shadow-glow">
               {user?.avatarUrl ? (
-                <img src={user.avatarUrl} alt="Profile" className="h-full w-full object-cover" />
+                <img
+                  src={user.avatarUrl}
+                  alt="Profile"
+                  className="h-full w-full object-cover"
+                />
               ) : (
                 user?.avatarInitials || 'U'
               )}
             </span>
+
             <div className="min-w-0">
               <div className="truncate text-sm font-semibold text-slate-900 dark:text-white">
                 {user?.name || 'User'}
               </div>
+
               <div className="mt-0.5 inline-flex">
                 <span
                   className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${
@@ -156,11 +148,11 @@ export default function Sidebar({ open, onClose }) {
     </div>
   );
 
-  // Mobile drawer keeps the full-width inner (no icon-only collapse on phones).
   const mobileInner = (
     <div className="flex h-full flex-col">
       <div className="flex items-center justify-between px-5 py-4">
         <Logo size="sm" />
+
         <button
           onClick={onClose}
           className="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl text-slate-500 transition hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white"
@@ -169,24 +161,37 @@ export default function Sidebar({ open, onClose }) {
           <X className="h-5 w-5" />
         </button>
       </div>
+
       <nav className="sidebar-scroll flex-1 space-y-1 overflow-y-auto px-3 pb-4">
         {items.map((item) => (
-          <NavItem key={item.module} item={item} onNavigate={onClose} collapsed={false} />
+          <NavItem
+            key={item.module}
+            item={item}
+            onNavigate={onClose}
+            collapsed={false}
+          />
         ))}
       </nav>
+
       <div className="border-t border-slate-200 p-3 dark:border-slate-800">
         <div className="flex items-center gap-3 rounded-xl bg-slate-50 p-3 dark:bg-slate-800/60">
           <span className="grid h-10 w-10 flex-shrink-0 place-items-center overflow-hidden rounded-full bg-gradient-to-br from-indigo-500 via-fuchsia-500 to-cyan-400 text-xs font-bold text-white shadow-glow">
             {user?.avatarUrl ? (
-              <img src={user.avatarUrl} alt="Profile" className="h-full w-full object-cover" />
+              <img
+                src={user.avatarUrl}
+                alt="Profile"
+                className="h-full w-full object-cover"
+              />
             ) : (
               user?.avatarInitials || 'U'
             )}
           </span>
+
           <div className="min-w-0">
             <div className="truncate text-sm font-semibold text-slate-900 dark:text-white">
               {user?.name || 'User'}
             </div>
+
             <div className="mt-0.5 inline-flex">
               <span
                 className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${
@@ -219,6 +224,7 @@ export default function Sidebar({ open, onClose }) {
             className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm dark:bg-black/70"
             onClick={onClose}
           />
+
           <div className="absolute inset-y-0 left-0 flex w-72 flex-col bg-white shadow-xl dark:bg-slate-950">
             {mobileInner}
           </div>

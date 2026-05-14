@@ -150,26 +150,24 @@ export default function PlatformRbac() {
           <Badge tone="indigo">{TENANT_ROLES.length} roles</Badge>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="min-w-full text-sm">
-            <thead className="bg-slate-50 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:bg-slate-900/60 dark:text-slate-400">
+        <div className="matrix-table-shell">
+          <table className="matrix-table">
+            <thead>
               <tr>
-                <th className="px-5 py-3">Module</th>
+                <th>Module</th>
                 {TENANT_ROLES.map((r) => (
-                  <th key={r} className="px-5 py-3 text-center">
+                  <th key={r} className="text-center">
                     {ROLE_LABELS[r]}
                   </th>
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+            <tbody>
               {MATRIX_MODULES.map((mod) => (
-                <tr key={mod.key} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40">
-                  <td className="px-5 py-3 font-medium text-slate-900 dark:text-white">
-                    {mod.label}
-                  </td>
+                <tr key={mod.key}>
+                  <td>{mod.label}</td>
                   {TENANT_ROLES.map((r) => (
-                    <td key={r} className="px-5 py-3 text-center">
+                    <td key={r} className="text-center">
                       <PermissionCell role={r} moduleKey={mod.key} />
                     </td>
                   ))}
@@ -196,23 +194,21 @@ export default function PlatformRbac() {
           </div>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="min-w-full text-sm">
-            <thead className="bg-slate-50 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:bg-slate-900/60 dark:text-slate-400">
+        <div className="matrix-table-shell">
+          <table className="matrix-table">
+            <thead>
               <tr>
-                <th className="px-5 py-3">Area</th>
-                <th className="px-5 py-3">Super Admin access</th>
+                <th>Area</th>
+                <th>Super Admin access</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+            <tbody>
               {PLATFORM_ACCESS_ROWS.map((row) => {
                 const isOperational = row.key === 'operational';
                 return (
-                  <tr key={row.key} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40">
-                    <td className="px-5 py-3 font-medium text-slate-900 dark:text-white">
-                      {row.label}
-                    </td>
-                    <td className="px-5 py-3">
+                  <tr key={row.key}>
+                    <td>{row.label}</td>
+                    <td>
                       <Badge tone={isOperational ? 'amber' : 'emerald'}>
                         {row.summary}
                       </Badge>

@@ -5,75 +5,81 @@
  * lives here so every place in the project that needs to ask "should
  * this render as a table or as cards?" gets the same answer.
  *
- * Rules (from the product spec):
- *   - Mobile / tablet always renders cards (< 1024px viewport).
- *   - Laptop and desktop render the table only when the available
- *     container width fits the required table width — with a comfortable
- *     buffer so cells never feel cramped or force a horizontal scroll.
- *   - If there are more than 7 visible columns and the viewport is
- *     below 1440px, render cards (avoid cramming columns into a row).
- *   - Sidebar-open / narrow container automatically forces cards because
- *     we measure the container, not the viewport.
- *   - On laptop breakpoint (1024–1365px) a 1.20x safety factor is applied
- *     to required width so the switch happens before horizontal scroll.
- *   - On desktop (1366–1919px) a 1.10x safety factor is applied.
+ * Rules (single source of truth — all tables in the product follow this):
+ *   - Mobile and tablet (viewport < laptop breakpoint) → cards.
+ *   - Laptop, desktop and large desktop → table. ALWAYS.
+ *   - On laptop/desktop, wide tables fit by hiding lower-priority columns
+ *     and compacting padding — not by switching to cards.
+ *   - Sidebar-open / narrow container does NOT force cards. Desktop and
+ *     laptop must show a table even when their measured container is
+ *     narrower than the natural table width.
  */
-
 import {
   TABLE_BREAKPOINTS,
   COLUMN_PRIORITY,
   getBreakpoint,
+  isColumnVisible,
+  getVisiblePriorities,
 } from '../config/table-responsive-config.js';
 
 const DEFAULT_MIN_COLUMN_WIDTH = 140;
-const DEFAULT_ACTIONS_WIDTH = 140;
+const DEFAULT_ACTIONS_WIDTH = 120;
 const DEFAULT_SERIAL_WIDTH = 64;
 const DEFAULT_SELECT_WIDTH = 44;
 
 /**
  * Parse a width style value ('160px', 160, '8rem', '15%') into pixels.
- * Falls back to defaultWidth when the value cannot be parsed (e.g. '%').
+ * Falls back to defaultWidth when the value cannot be parsed.
  */
 export function parseWidthPx(value, defaultWidth = DEFAULT_MIN_COLUMN_WIDTH) {
   if (value === null || value === undefined) return defaultWidth;
-  if (typeof value === 'number' && Number.isFinite(value)) return value;
+
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return value;
+  }
+
   const str = String(value).trim();
+
   if (str.endsWith('px')) {
     const n = Number.parseFloat(str);
     return Number.isFinite(n) ? n : defaultWidth;
   }
+
   if (str.endsWith('rem')) {
     const n = Number.parseFloat(str);
     return Number.isFinite(n) ? n * 16 : defaultWidth;
   }
+
   const n = Number.parseFloat(str);
   return Number.isFinite(n) ? n : defaultWidth;
 }
 
 /**
- * Estimate the natural width a column needs. Honours explicit width,
- * minWidth, and falls back to a per-priority default. Used by
- * shouldRenderCards to compare against the available container width.
+ * Estimate the natural width a column needs.
  */
 export function estimateColumnWidth(column) {
   if (!column) return DEFAULT_MIN_COLUMN_WIDTH;
+
   if (column.width) return parseWidthPx(column.width);
   if (column.minWidth) return parseWidthPx(column.minWidth);
+
   switch (column.priority) {
     case COLUMN_PRIORITY.CRITICAL:
       return 180;
+
     case COLUMN_PRIORITY.HIGH:
       return 150;
+
     case COLUMN_PRIORITY.LOW:
       return 110;
+
     default:
       return 140;
   }
 }
 
 /**
- * Sum up the natural required width of a column set, including any
- * structural columns (selection checkbox, serial number, actions).
+ * Sum up the required table width, including selection, serial and actions.
  */
 export function computeRequiredTableWidth(columns = [], extras = {}) {
   const {
@@ -81,32 +87,33 @@ export function computeRequiredTableWidth(columns = [], extras = {}) {
     includeSerial = false,
     actionsCount = 0,
   } = extras;
+
   let total = 0;
+
   if (includeSelection) total += DEFAULT_SELECT_WIDTH;
   if (includeSerial) total += DEFAULT_SERIAL_WIDTH;
-  for (const c of columns) total += estimateColumnWidth(c);
+
+  for (const column of columns) {
+    total += estimateColumnWidth(column);
+  }
+
   if (actionsCount > 0) {
     total += Math.max(DEFAULT_ACTIONS_WIDTH, actionsCount * 36 + 24);
   }
+
   return total;
 }
 
 /**
- * Single source of truth for the table-vs-cards decision.
+ * Single source of truth for table vs cards decision.
  *
- *   containerWidth   measured width of the table wrapper (ResizeObserver)
- *   viewportWidth    window.innerWidth, used for breakpoint checks
- *   requiredWidth    output of computeRequiredTableWidth
- *   visibleColumns   used for the >7 cols + < 1440px rule
- *   displayMode      'auto' (default), 'table', or 'cards'
+ * Returns true  = render cards.
+ * Returns false = render table.
  *
- * Returns true → render the card grid, false → render the table.
- *
- * Safety factors applied per breakpoint so the switch to cards happens
- * before horizontal scroll appears:
- *   laptop  (1024–1365 px)  → multiply requiredWidth by 1.20
- *   desktop (1366–1919 px)  → multiply requiredWidth by 1.10
- *   large   (≥1920 px)      → no factor (plenty of room)
+ * Cards are rendered ONLY when the viewport is below the laptop
+ * breakpoint (true mobile / tablet). Desktop and laptop always render
+ * the table — wide tables are made to fit by hiding lower-priority
+ * columns and compacting padding, never by switching to cards.
  */
 export function shouldRenderCards({
   containerWidth,
@@ -119,40 +126,34 @@ export function shouldRenderCards({
   if (displayMode === 'table') return false;
 
   const vw = Number.isFinite(viewportWidth) ? viewportWidth : 0;
-  const cw = Number.isFinite(containerWidth) ? containerWidth : 0;
-  const rw = Number.isFinite(requiredWidth) ? requiredWidth : 0;
 
-  // Mobile + tablet: always cards (< 1024px).
-  if (vw > 0 && vw < TABLE_BREAKPOINTS.laptop.min) return true;
-
-  // Laptop breakpoint (1024–1365px): sidebar takes ~260px so the usable
-  // content area is typically 760–1100px — almost always too narrow for a
-  // multi-column table. Switch to cards unconditionally at this range.
-  if (vw > 0 && vw <= TABLE_BREAKPOINTS.laptop.max) return true;
-
-  // Many columns on a narrow viewport: cards.
-  if (vw > 0 && vw < 1440 && visibleColumns.length > 7) return true;
-
-  // Container too narrow to host the table (with a per-breakpoint safety
-  // buffer so we switch to cards before the scroll bar appears).
-  if (cw > 0 && rw > 0) {
-    let safetyFactor = 1.0;
-    if (vw > 0 && vw <= TABLE_BREAKPOINTS.laptop.max) {
-      // Laptop: sidebar eats ~260px — be generous with the buffer.
-      safetyFactor = 1.20;
-    } else if (vw > 0 && vw <= TABLE_BREAKPOINTS.desktop.max) {
-      // Desktop: standard buffer to absorb padding & scrollbar width.
-      safetyFactor = 1.10;
-    }
-    if (cw < rw * safetyFactor) return true;
+  // Mobile and tablet only should use cards.
+  if (vw > 0 && vw < TABLE_BREAKPOINTS.laptop.min) {
+    return true;
   }
 
+  // Desktop and laptop should always use table.
   return false;
 }
 
 export function getCurrentBreakpoint(viewportWidth) {
   return getBreakpoint(Number.isFinite(viewportWidth) ? viewportWidth : 0);
 }
+
+/**
+ * Given a list of columns and the current viewport, return the subset
+ * that should actually render in the desktop/laptop table. Drops columns
+ * whose priority falls outside the breakpoint's visible-priority set so
+ * the table fits the container without horizontal scroll and without
+ * having to flip to a card layout.
+ */
+export function getVisibleColumnsForBreakpoint(columns = [], viewportWidth) {
+  if (!Array.isArray(columns) || columns.length === 0) return [];
+  const bp = getBreakpoint(Number.isFinite(viewportWidth) ? viewportWidth : 0);
+  return columns.filter((c) => isColumnVisible(c, bp));
+}
+
+export { getVisiblePriorities };
 
 export const TABLE_UTIL_DEFAULTS = {
   DEFAULT_MIN_COLUMN_WIDTH,
@@ -167,5 +168,6 @@ export default {
   computeRequiredTableWidth,
   shouldRenderCards,
   getCurrentBreakpoint,
+  getVisibleColumnsForBreakpoint,
   TABLE_UTIL_DEFAULTS,
 };

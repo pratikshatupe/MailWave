@@ -23,28 +23,35 @@ export default function TableFilterBar({
   const hasFilters = Boolean(filters);
 
   return (
-    <div className={`flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between ${className}`}>
-      <div className="flex w-full items-center gap-2 sm:max-w-md">
-        {onQueryChange && (
-          <SearchField
-            value={query}
-            onChange={(e) => onQueryChange(e.target.value)}
-            placeholder={searchPlaceholder}
-          />
-        )}
-        {hasFilters && (
-          <button
-            type="button"
-            onClick={() => setDrawerOpen(true)}
-            className="inline-flex h-10 cursor-pointer items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800 sm:hidden"
-          >
-            <Filter className="h-4 w-4" /> Filters
-          </button>
-        )}
-      </div>
+    <div
+      className={`flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between ${className}`}
+    >
+      {(onQueryChange || hasFilters) && (
+        <div className="flex w-full items-center gap-2 sm:w-auto sm:min-w-0 sm:flex-1">
+          {onQueryChange && (
+            <SearchField
+              value={query}
+              onChange={(e) => onQueryChange(e.target.value)}
+              placeholder={searchPlaceholder}
+            />
+          )}
+
+          {hasFilters && (
+            <button
+              type="button"
+              onClick={() => setDrawerOpen(true)}
+              className="inline-flex h-10 cursor-pointer items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800 sm:hidden"
+            >
+              <Filter className="h-4 w-4" /> Filters
+            </button>
+          )}
+        </div>
+      )}
 
       {hasFilters && (
-        <div className="hidden flex-wrap items-center gap-2 sm:flex">{filters}</div>
+        <div className="hidden w-full flex-wrap items-center gap-2 sm:flex">
+          {filters}
+        </div>
       )}
 
       {rightSlot && <div className="flex items-center gap-2">{rightSlot}</div>}

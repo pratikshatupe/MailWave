@@ -39,9 +39,23 @@ export default function ContactTable({
   onUnsubscribe,
   onInlineUpdated,
   bulkBar,
+  filters,
+  rightSlot,
+  tagOptions = [],
+  segmentOptions = [],
+  empty,
   toastSink,
 }) {
   const isViewer = role === ROLES.VIEWER;
+
+  const tagOptionList = useMemo(
+    () => Array.from(new Set(tagOptions)).map((t) => ({ value: t, label: t })),
+    [tagOptions]
+  );
+  const segmentOptionList = useMemo(
+    () => Array.from(new Set(segmentOptions)).map((s) => ({ value: s, label: s })),
+    [segmentOptions]
+  );
 
   // Decorate the central column registry: render fullName as a link to
   // the detail page and use the contact-specific tone helpers for the
@@ -74,24 +88,29 @@ export default function ContactTable({
             ),
           };
         }
+        if (c.key === 'tags') {
+          return { ...c, getOptions: () => tagOptionList };
+        }
+        if (c.key === 'segments') {
+          return { ...c, getOptions: () => segmentOptionList };
+        }
         return c;
       });
-  }, [showOrganisation]);
+  }, [showOrganisation, tagOptionList, segmentOptionList]);
 
+  // Row actions are intentionally limited to View + Delete across every
+  // module. Edit, status change, tag change, unsubscribe etc. happen via
+  // inline edit on the field itself (see inline-edit-cell.jsx) or from
+  // the contact's detail page — keeping the action column compact and
+  // consistent product-wide.
   const actions = useMemo(() => {
     const keys = ['view'];
-    if (canEdit && !isViewer) keys.push('edit');
-    if (canManageTags && !isViewer) keys.push('addTag');
-    if (!isViewer || canResubscribe) keys.push('unsubscribe');
     if (canDelete && !isViewer) keys.push('delete');
     return keys;
-  }, [canEdit, canDelete, canManageTags, canResubscribe, isViewer]);
+  }, [canDelete, isViewer]);
 
   const actionHandlers = {
     view: (row) => onView?.(row),
-    edit: (row) => onEdit?.(row),
-    addTag: (row) => onAddTag?.(row),
-    unsubscribe: (row) => onUnsubscribe?.(row),
     delete: (row) => onDelete?.(row),
   };
 
@@ -119,7 +138,10 @@ export default function ContactTable({
       selectedIds={selectedIds}
       onSelectionChange={onSelectionChange}
       searchable={false}
+      filters={filters}
+      rightSlot={rightSlot}
       topBar={!isViewer && canBulkDelete ? bulkBar : null}
+      empty={empty}
     />
   );
 }

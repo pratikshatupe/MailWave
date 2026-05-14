@@ -24,8 +24,12 @@ export const COLUMN_PRIORITY = {
 export const PRIORITY_ORDER = ['critical', 'high', 'medium', 'low'];
 
 /**
- * Which priorities are shown at each breakpoint. Anything outside the list
- * collapses into the "More Details" accordion.
+ * Which column priorities render at each breakpoint. Desktop and large
+ * desktop show every column. Laptop drops `low` priority columns first to
+ * fit the table inside narrower laptop widths without horizontal scroll —
+ * we never fall back to cards on laptop, so column hiding is the only
+ * lever. Tablet/mobile use cards and surface low-priority data inside the
+ * "More Details" accordion.
  */
 export const VISIBLE_PRIORITIES = {
   mobile: ['critical'],
@@ -35,10 +39,14 @@ export const VISIBLE_PRIORITIES = {
   largeDesktop: ['critical', 'high', 'medium', 'low'],
 };
 
+/**
+ * Layout at each breakpoint. Laptop now renders the table (with priority
+ * column hiding) — only true mobile/tablet falls back to cards.
+ */
 export const TABLE_LAYOUT = {
   mobile: 'card',
   tablet: 'card',
-  laptop: 'card',   // sidebar + laptop viewport → cards prevent horizontal scroll
+  laptop: 'table',
   desktop: 'table',
   largeDesktop: 'table',
 };

@@ -67,6 +67,7 @@ export default function AppTableCard({
                       value={value}
                       column={col}
                       rowId={row[rowKey]}
+                      row={row}
                       disabled={isViewer || inlineEdit.disabled}
                       onSave={inlineEdit.onSave}
                       renderDisplay={() => renderDefaultCell(value, col, row)}

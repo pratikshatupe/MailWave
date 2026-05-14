@@ -65,10 +65,22 @@ export function actionLabelForCount(count) {
 }
 
 /**
+ * Globally allowed row-action keys. Every editable behaviour
+ * (status change, tag change, role change, pause/resume, duplicate,
+ * approve/reject, send now, etc.) is expected to live on the field
+ * itself via InlineEditCell or on the record's details page — the row
+ * action column stays compact and consistent across every module.
+ */
+export const ROW_ACTION_ALLOWLIST = ['view', 'delete'];
+
+/**
  * Render a row of action buttons.
  *
  *   row         the current row data
- *   actions     ordered list of action keys (strings) — e.g. ['view','edit','delete']
+ *   actions     ordered list of action keys (strings) — only 'view'
+ *               and 'delete' are rendered; any other key is silently
+ *               dropped so that legacy callers cannot reintroduce
+ *               edit / duplicate / pause / etc. icons by accident.
  *   handlers    object of handler functions keyed by action key
  *   permissions object of booleans keyed by action key (true = allowed,
  *               false = hidden, undefined = allowed by default)
@@ -84,6 +96,7 @@ export default function TableActions({
   className = '',
 }) {
   const allowed = actions.filter((key) => {
+    if (!ROW_ACTION_ALLOWLIST.includes(key)) return false;
     if (!ACTION_DEFINITIONS[key]) return false;
     if (permissions[key] === false) return false;
     if (!handlers[key]) return false;

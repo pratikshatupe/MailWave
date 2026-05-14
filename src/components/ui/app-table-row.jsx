@@ -96,6 +96,19 @@ export default function AppTableRow({
         </td>
       )}
       {columns.map((column) => {
+        // SR. No. column renders the running index when no explicit
+        // render is supplied — mock data does not carry an `srNo` field.
+        if (column.key === 'srNo' && typeof column.render !== 'function') {
+          return (
+            <td
+              key={column.key}
+              className="app-table-cell"
+              style={column.width ? { width: column.width } : undefined}
+            >
+              {start + index + 1}.
+            </td>
+          );
+        }
         const value = row[column.key];
         const display = renderDefaultCell(value, column, row);
 
@@ -110,6 +123,7 @@ export default function AppTableRow({
                 value={value}
                 column={column}
                 rowId={row[rowKey]}
+                row={row}
                 disabled={isViewer || inlineEdit.disabled}
                 onSave={inlineEdit.onSave}
                 renderDisplay={() => display}
@@ -129,7 +143,7 @@ export default function AppTableRow({
         );
       })}
       {actions && actions.length > 0 && (
-        <td className="app-table-cell app-table-actions" style={{ minWidth: 120 }}>
+        <td className="app-table-cell app-table-actions" style={{ width: 110 }}>
           <TableActions
             row={row}
             actions={actions}

@@ -61,14 +61,14 @@ export const SHARED_BADGE_TONES = STATUS_TONES;
 
 const CONTACT_COLUMNS = {
   columns: [
-    { key: 'srNo', label: LABELS.serialNumber, priority: COLUMN_PRIORITY.LOW, width: '64px', sortable: false, searchable: false },
+    { key: 'srNo', label: LABELS.serialNumber, priority: COLUMN_PRIORITY.CRITICAL, width: '60px', sortable: false, searchable: false },
     { key: 'fullName', label: LABELS.fullName, type: 'text', priority: COLUMN_PRIORITY.CRITICAL, sortable: true, searchable: true, editable: true, editType: 'text', validator: 'fullName', truncate: true },
     { key: 'emailId', label: LABELS.emailId, type: 'email', priority: COLUMN_PRIORITY.CRITICAL, sortable: true, searchable: true, editable: true, editType: 'email', validator: 'emailId', truncate: true, tooltip: true },
     { key: 'contactNumber', label: LABELS.contactNumber, type: 'text', priority: COLUMN_PRIORITY.HIGH, width: '140px', searchable: true, editable: true, editType: 'contactNumber', validator: 'contactNumber' },
     { key: 'status', label: LABELS.status, type: 'badge', priority: COLUMN_PRIORITY.CRITICAL, editable: true, editType: 'select', options: 'contactStatus', sortable: true },
-    { key: 'tags', label: 'Tags', type: 'tags', priority: COLUMN_PRIORITY.HIGH, wrap: true, searchable: true },
-    { key: 'segments', label: 'Segment', type: 'tags', priority: COLUMN_PRIORITY.MEDIUM, wrap: true },
-    { key: 'source', label: 'Source', type: 'text', priority: COLUMN_PRIORITY.MEDIUM, editable: true, editType: 'select', options: 'contactSource' },
+    { key: 'tags', label: 'Tags', type: 'tags', priority: COLUMN_PRIORITY.HIGH, wrap: true, searchable: true, editable: true, editType: 'multiselect' },
+    { key: 'source', label: 'Source', type: 'text', priority: COLUMN_PRIORITY.HIGH, editable: true, editType: 'select', options: 'contactSource' },
+    { key: 'segments', label: 'Segment', type: 'tags', priority: COLUMN_PRIORITY.LOW, wrap: true, editable: true, editType: 'multiselect' },
     { key: 'engagementScore', label: 'Engagement', type: 'number', priority: COLUMN_PRIORITY.LOW, width: '110px' },
     { key: 'organisationName', label: LABELS.organisation, type: 'text', priority: COLUMN_PRIORITY.LOW, truncate: true },
     { key: 'createdAt', label: LABELS.createdAt, type: 'date', priority: COLUMN_PRIORITY.LOW, width: '120px' },
@@ -220,12 +220,12 @@ const PAYMENT_COLUMNS = {
 const CAMPAIGN_COLUMNS = {
   columns: [
     { key: 'name', label: LABELS.campaignName, priority: COLUMN_PRIORITY.CRITICAL, searchable: true, truncate: true },
-    { key: 'audience', label: 'Audience', priority: COLUMN_PRIORITY.HIGH, truncate: true },
-    { key: 'sent', label: 'Sent', priority: COLUMN_PRIORITY.MEDIUM, width: '100px' },
-    { key: 'open', label: 'Open Rate', priority: COLUMN_PRIORITY.MEDIUM, width: '110px' },
-    { key: 'click', label: 'Click Rate', priority: COLUMN_PRIORITY.LOW, width: '110px' },
-    { key: 'date', label: LABELS.date, priority: COLUMN_PRIORITY.LOW, width: '120px' },
+    { key: 'sent', label: 'Recipients', priority: COLUMN_PRIORITY.HIGH, width: '110px' },
     { key: 'status', label: LABELS.status, type: 'badge', priority: COLUMN_PRIORITY.CRITICAL, editable: true, editType: 'select', options: 'campaignStatus' },
+    { key: 'open', label: 'Open Rate', priority: COLUMN_PRIORITY.HIGH, width: '110px' },
+    { key: 'click', label: 'Click Rate', priority: COLUMN_PRIORITY.MEDIUM, width: '110px' },
+    { key: 'date', label: 'Created At', priority: COLUMN_PRIORITY.MEDIUM, width: '120px' },
+    { key: 'audience', label: 'Audience', priority: COLUMN_PRIORITY.LOW, truncate: true },
   ],
   mobile: {
     mobileTitleKey: 'name',
@@ -271,9 +271,9 @@ const TEMPLATE_COLUMNS = {
   columns: [
     { key: 'name', label: LABELS.templateName, priority: COLUMN_PRIORITY.CRITICAL, searchable: true, truncate: true },
     { key: 'category', label: 'Category', priority: COLUMN_PRIORITY.HIGH },
+    { key: 'status', label: LABELS.status, type: 'badge', priority: COLUMN_PRIORITY.CRITICAL, editable: true, editType: 'select', options: 'templateStatus' },
     { key: 'updatedAt', label: LABELS.updatedAt, type: 'date', priority: COLUMN_PRIORITY.MEDIUM, width: '120px' },
     { key: 'usageCount', label: 'Usage', priority: COLUMN_PRIORITY.LOW, width: '90px' },
-    { key: 'status', label: LABELS.status, type: 'badge', priority: COLUMN_PRIORITY.HIGH, editable: true, editType: 'select', options: 'templateStatus' },
   ],
   mobile: {
     mobileTitleKey: 'name',
@@ -316,22 +316,21 @@ const SEGMENT_COLUMNS = {
 
 const AUTOMATION_COLUMNS = {
   columns: [
-    { key: 'name', label: 'Automation Name', priority: COLUMN_PRIORITY.CRITICAL, searchable: true, truncate: true },
-    { key: 'trigger', label: 'Trigger', priority: COLUMN_PRIORITY.HIGH },
-    { key: 'steps', label: 'Steps', priority: COLUMN_PRIORITY.MEDIUM, width: '80px' },
-    { key: 'runsCount', label: 'Runs', priority: COLUMN_PRIORITY.LOW, width: '90px' },
-    { key: 'updatedAt', label: LABELS.updatedAt, type: 'date', priority: COLUMN_PRIORITY.LOW, width: '120px' },
+    { key: 'automationName', label: 'Automation Name', priority: COLUMN_PRIORITY.CRITICAL, searchable: true, truncate: true },
+    { key: 'triggerType', label: 'Trigger', priority: COLUMN_PRIORITY.HIGH },
     { key: 'status', label: LABELS.status, type: 'badge', priority: COLUMN_PRIORITY.CRITICAL, editable: true, editType: 'select', options: 'automationStatus' },
+    { key: 'audienceType', label: 'Audience', priority: COLUMN_PRIORITY.HIGH },
+    { key: 'createdAt', label: 'Created At', type: 'date', priority: COLUMN_PRIORITY.MEDIUM, width: '140px' },
   ],
   mobile: {
-    mobileTitleKey: 'name',
-    mobileSubtitleKey: 'trigger',
+    mobileTitleKey: 'automationName',
+    mobileSubtitleKey: 'triggerType',
     mobileBadgeKey: 'status',
-    mobileDetailKeys: ['steps', 'runsCount', 'updatedAt'],
-    mobileActionKeys: ['view', 'edit', 'pause', 'resume', 'delete'],
+    mobileDetailKeys: ['audienceType', 'createdAt'],
+    mobileActionKeys: ['view', 'edit', 'duplicate', 'pause', 'resume', 'delete'],
   },
   search: {
-    keys: ['name', 'trigger', 'status'],
+    keys: ['automationName', 'triggerType', 'audienceType', 'status'],
     placeholder: 'Search automations…',
   },
 };
@@ -722,6 +721,7 @@ export const TABLE_OPTION_SETS = {
     { value: 'Cancelled', label: 'Cancelled', tone: 'slate' },
   ],
   paymentStatus: [
+    { value: 'Succeeded', label: 'Succeeded', tone: 'emerald' },
     { value: 'Paid', label: 'Paid', tone: 'emerald' },
     { value: 'Pending', label: 'Pending', tone: 'amber' },
     { value: 'Failed', label: 'Failed', tone: 'rose' },
@@ -744,9 +744,11 @@ export const TABLE_OPTION_SETS = {
     { value: 'Inactive', label: 'Inactive', tone: 'slate' },
   ],
   automationStatus: [
+    { value: 'Draft', label: 'Draft', tone: 'slate' },
     { value: 'Active', label: 'Active', tone: 'emerald' },
     { value: 'Paused', label: 'Paused', tone: 'amber' },
-    { value: 'Draft', label: 'Draft', tone: 'slate' },
+    { value: 'Completed', label: 'Completed', tone: 'indigo' },
+    { value: 'Failed', label: 'Failed', tone: 'rose' },
   ],
   notificationStatus: [
     { value: 'Unread', label: 'Unread', tone: 'indigo' },
@@ -765,8 +767,10 @@ export const TABLE_OPTION_SETS = {
   ],
   couponStatus: [
     { value: 'Active', label: 'Active', tone: 'emerald' },
+    { value: 'Scheduled', label: 'Scheduled', tone: 'indigo' },
     { value: 'Expired', label: 'Expired', tone: 'rose' },
     { value: 'Disabled', label: 'Disabled', tone: 'slate' },
+    { value: 'Draft', label: 'Draft', tone: 'amber' },
   ],
   referralStatus: [
     { value: 'Pending', label: 'Pending', tone: 'amber' },

@@ -5,14 +5,15 @@
  * mobile and pagination configuration from the central files in
  * src/config so any change made there propagates to every module table.
  *
- * Features:
- *   - displayMode="auto" (default) measures the wrapper with
- *     ResizeObserver and switches to a card grid the moment the visible
- *     columns can no longer fit — so the same table behaves correctly
- *     on a 1366px screen with the sidebar open.
- *   - displayMode="table" or "cards" lets a caller force a layout.
- *   - Mobile and tablet always render cards. Laptops below 1440px with
- *     more than seven visible columns render cards too.
+ * Responsive contract (matches src/utils/table-utils.js):
+ *   - Mobile / tablet (viewport < 1024px) → card grid.
+ *   - Laptop / desktop / large desktop → ALWAYS the table layout. Wide
+ *     tables fit by dropping lower-priority columns and using compact
+ *     padding + truncation; we never fall back to cards on desktop/laptop.
+ *   - displayMode="cards" or "table" still lets a caller force a layout,
+ *     but module pages should leave it as "auto".
+ *
+ * Other behaviour:
  *   - Inline edit on hover with validation, save / cancel, dropdown that
  *     auto-flips upward when there is no space below.
  *   - Action column with tooltips, role permission gating and
@@ -33,8 +34,8 @@ import { getTableConfig } from '../../config/table-columns.js';
 import { handleInlineUpdate } from '../../services/table-service.js';
 import { ROLES } from '../../config/roles.js';
 import { isReadOnly as isRoleReadOnly } from '../../utils/permissions.js';
+import { isColumnVisible, getBreakpoint } from '../../config/table-responsive-config.js';
 import {
-  computeRequiredTableWidth,
   shouldRenderCards,
 } from '../../utils/table-utils.js';
 
@@ -45,12 +46,66 @@ import AppTableCard from './app-table-card.jsx';
 
 import '../../styles/table-responsive.css';
 
+// Legacy module pages set `priority: 1..4`. The central registry uses
+// the string priority names (critical / high / medium / low). Normalise
+// numbers so isColumnVisible() handles both shapes.
+const NUMERIC_PRIORITY_MAP = {
+  1: 'critical',
+  2: 'high',
+  3: 'medium',
+  4: 'low',
+};
+
+function normalisePriority(p) {
+  if (typeof p === 'number') return NUMERIC_PRIORITY_MAP[p] || 'medium';
+  if (typeof p === 'string') return p;
+  return TABLE_CONFIG.columns.defaultPriority || 'medium';
+}
+
 function ensurePriorityDefaults(column) {
   return {
-    priority: column.priority || TABLE_CONFIG.columns.defaultPriority,
     truncate: column.truncate ?? TABLE_CONFIG.columns.truncate,
     ...column,
+    priority: normalisePriority(column.priority),
   };
+}
+
+/**
+ * Merge provided columns with the central registry columns by key. The
+ * provided column wins for visible bits (label / render / value / order),
+ * but inline edit metadata (editable / editType / options / validator)
+ * and column hints (priority / width / truncate / tooltip / type /
+ * searchable / sortable) come through from the registry so a page that
+ * only overrides `render` still gets dropdown edit behaviour for status
+ * etc.
+ */
+function mergeColumnsWithRegistry(provided, registry) {
+  if (!provided || provided.length === 0) return [];
+  if (!registry || registry.length === 0) return provided;
+  const byKey = new Map(registry.map((c) => [c.key, c]));
+  return provided.map((c) => {
+    const base = byKey.get(c.key);
+    if (!base) return c;
+    const merged = { ...base, ...c };
+    // Carry inline edit hints from registry when the page didn't supply
+    // explicit overrides — these are easy to forget.
+    for (const k of [
+      'editable',
+      'editType',
+      'options',
+      'validator',
+      'sortable',
+      'searchable',
+      'truncate',
+      'tooltip',
+      'priority',
+      'type',
+      'badgeMap',
+    ]) {
+      if (merged[k] === undefined && base[k] !== undefined) merged[k] = base[k];
+    }
+    return merged;
+  });
 }
 
 function defaultSearchMatch(row, query, columns, explicitKeys) {
@@ -136,20 +191,24 @@ export default function AppTable({
 
   const baseColumns = useMemo(() => {
     const provided = columnsProp || registry?.columns || [];
-    return provided.map(ensurePriorityDefaults);
+    const merged =
+      columnsProp && registry?.columns
+        ? mergeColumnsWithRegistry(columnsProp, registry.columns)
+        : provided;
+    return merged.map(ensurePriorityDefaults);
   }, [columnsProp, registry]);
 
   // Drop the action column if it's defined in legacy form ({ key: 'actions' })
   // so we can render it through the central TableActions instead.
-  const visibleColumns = useMemo(
+  const allColumns = useMemo(
     () => baseColumns.filter((c) => c.key !== 'actions'),
     [baseColumns]
   );
 
   const mobile = mobileConfig || registry?.mobile || {
-    mobileTitleKey: visibleColumns[0]?.key,
-    mobileSubtitleKey: visibleColumns[1]?.key,
-    mobileDetailKeys: visibleColumns.slice(2).map((c) => c.key),
+    mobileTitleKey: allColumns[0]?.key,
+    mobileSubtitleKey: allColumns[1]?.key,
+    mobileDetailKeys: allColumns.slice(2).map((c) => c.key),
     mobileActionKeys: actions || [],
   };
 
@@ -166,23 +225,7 @@ export default function AppTable({
   /* ----------------------- Responsive layout decision --------------------- */
 
   const wrapperRef = useRef(null);
-  const [containerWidth, setContainerWidth] = useState(0);
   const [viewportWidth, setViewportWidth] = useState(getViewportWidth());
-
-  useLayoutEffect(() => {
-    if (typeof window === 'undefined' || !wrapperRef.current) return undefined;
-    const el = wrapperRef.current;
-    setContainerWidth(el.getBoundingClientRect().width);
-    if (typeof ResizeObserver === 'undefined') return undefined;
-    const observer = new ResizeObserver((entries) => {
-      const entry = entries[0];
-      if (!entry) return;
-      const w = entry.contentRect?.width || entry.target?.getBoundingClientRect().width || 0;
-      setContainerWidth(w);
-    });
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
 
   useEffect(() => {
     if (typeof window === 'undefined') return undefined;
@@ -193,27 +236,29 @@ export default function AppTable({
     return () => window.removeEventListener('resize', onResize);
   }, []);
 
-  const requiredWidth = useMemo(
-    () =>
-      computeRequiredTableWidth(visibleColumns, {
-        includeSelection: selectable,
-        includeSerial: showSerial,
-        actionsCount: resolvedActions.length,
-      }),
-    [visibleColumns, selectable, showSerial, resolvedActions.length]
-  );
-
+  // Cards only when the viewport is true mobile/tablet. Desktop and
+  // laptop always render the table — no container-width fallback.
   const renderAsCards = useMemo(
     () =>
       shouldRenderCards({
-        containerWidth,
         viewportWidth,
-        requiredWidth,
-        visibleColumns,
         displayMode,
       }),
-    [containerWidth, viewportWidth, requiredWidth, visibleColumns, displayMode]
+    [viewportWidth, displayMode]
   );
+
+  // On desktop/laptop, hide lower-priority columns to keep the table
+  // compact and avoid horizontal scroll. Cards (mobile/tablet) still see
+  // every column — low-priority ones go in the "More Details" accordion.
+  const tableColumns = useMemo(() => {
+    if (renderAsCards) return allColumns;
+    const bp = getBreakpoint(viewportWidth || 0);
+    const filtered = allColumns.filter((c) => isColumnVisible(c, bp));
+    // Fail-safe: never strip the table empty just because no priorities
+    // matched (e.g. legacy column shape with no priority). Fall back to
+    // showing every column when filtering removes everything.
+    return filtered.length > 0 ? filtered : allColumns;
+  }, [renderAsCards, allColumns, viewportWidth]);
 
   /* --------------------------------- Data --------------------------------- */
 
@@ -232,9 +277,9 @@ export default function AppTable({
   const filtered = useMemo(() => {
     if (!searchable || !query) return effectiveRows;
     return effectiveRows.filter((row) =>
-      defaultSearchMatch(row, query, visibleColumns, resolvedSearchKeys)
+      defaultSearchMatch(row, query, allColumns, resolvedSearchKeys)
     );
-  }, [effectiveRows, query, searchable, visibleColumns, resolvedSearchKeys]);
+  }, [effectiveRows, query, searchable, allColumns, resolvedSearchKeys]);
 
   const total = filtered.length;
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
@@ -252,7 +297,7 @@ export default function AppTable({
     () => ({
       disabled: inlineEditDisabled || isViewer,
       onSave: (rowId, columnKey, value) => {
-        const col = visibleColumns.find((c) => c.key === columnKey);
+        const col = allColumns.find((c) => c.key === columnKey);
         // If the parent supplied its own handler, defer to it (it can run
         // validation, hit a service, or refuse the update).
         if (typeof onInlineUpdate === 'function') {
@@ -278,7 +323,7 @@ export default function AppTable({
         return persisted;
       },
     }),
-    [tableKey, onInlineUpdate, isViewer, inlineEditDisabled, visibleColumns]
+    [tableKey, onInlineUpdate, isViewer, inlineEditDisabled, allColumns]
   );
 
   const noResults = paged.length === 0;
@@ -318,7 +363,7 @@ export default function AppTable({
                 key={row[rowKey] ?? `card-${index}`}
                 row={row}
                 rowKey={rowKey}
-                columns={visibleColumns}
+                columns={allColumns}
                 mobile={mobile}
                 inlineEdit={inlineEdit}
                 isViewer={isViewer}
@@ -337,7 +382,7 @@ export default function AppTable({
             </div>
           ) : (
             <div className="app-table-scroll">
-              <table className="app-table">
+              <table className="app-table table-fixed border-collapse w-full">
                 <thead className="app-table-header">
                   <tr>
                     {selectable && (
@@ -362,7 +407,7 @@ export default function AppTable({
                     {showSerial && (
                       <th style={{ width: 64 }}>{TABLE_CONFIG.columns.serialNumberLabel}</th>
                     )}
-                    {visibleColumns.map((c) => (
+                    {tableColumns.map((c) => (
                       <th
                         key={c.key}
                         style={c.width ? { width: c.width } : undefined}
@@ -371,7 +416,7 @@ export default function AppTable({
                       </th>
                     ))}
                     {resolvedActions.length > 0 && (
-                      <th className="app-table-actions" style={{ minWidth: 120 }}>
+                      <th className="app-table-actions" style={{ width: 110 }}>
                         {actionColumnLabel(resolvedActions.length)}
                       </th>
                     )}
@@ -385,7 +430,7 @@ export default function AppTable({
                       rowKey={rowKey}
                       index={index}
                       start={start}
-                      columns={visibleColumns}
+                      columns={tableColumns}
                       inlineEdit={inlineEdit}
                       isViewer={isViewer}
                       actions={resolvedActions}

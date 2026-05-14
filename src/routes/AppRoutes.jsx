@@ -25,8 +25,16 @@ import ContactTags from '../pages/modules/contact-tags.jsx';
 import UnsubscribedContacts from '../pages/modules/unsubscribed-contacts.jsx';
 import Segments from '../pages/modules/Segments.jsx';
 import Automations from '../pages/modules/Automations.jsx';
+import AutomationCreate from '../pages/modules/automation-create.jsx';
+import AutomationDetails from '../pages/modules/automation-details.jsx';
+import AutomationAnalytics from '../pages/modules/automation-analytics.jsx';
 import Analytics from '../pages/modules/Analytics.jsx';
+import AnalyticsCampaigns from '../pages/modules/analytics-campaigns.jsx';
+import AnalyticsAutomations from '../pages/modules/analytics-automations.jsx';
+import AnalyticsContacts from '../pages/modules/analytics-contacts.jsx';
 import Reports from '../pages/modules/Reports.jsx';
+import ReportCreate from '../pages/modules/report-create.jsx';
+import ReportDetails from '../pages/modules/report-details.jsx';
 import Notifications from '../pages/modules/Notifications.jsx';
 import Announcements from '../pages/modules/Announcements.jsx';
 import Coupons from '../pages/modules/Coupons.jsx';
@@ -152,12 +160,48 @@ export default function AppRoutes() {
           element={<ModuleRoute module={MODULE_KEYS.AUTOMATIONS}><Automations /></ModuleRoute>}
         />
         <Route
+          path={`${seg(ROUTES.automations)}/create`}
+          element={<ModuleRoute module={MODULE_KEYS.AUTOMATIONS}><AutomationCreate /></ModuleRoute>}
+        />
+        <Route
+          path={`${seg(ROUTES.automations)}/:id`}
+          element={<ModuleRoute module={MODULE_KEYS.AUTOMATIONS}><AutomationDetails /></ModuleRoute>}
+        />
+        <Route
+          path={`${seg(ROUTES.automations)}/:id/edit`}
+          element={<ModuleRoute module={MODULE_KEYS.AUTOMATIONS}><AutomationCreate /></ModuleRoute>}
+        />
+        <Route
+          path={`${seg(ROUTES.automations)}/:id/analytics`}
+          element={<ModuleRoute module={MODULE_KEYS.AUTOMATIONS}><AutomationAnalytics /></ModuleRoute>}
+        />
+        <Route
           path={seg(ROUTES.analytics)}
           element={<ModuleRoute module={MODULE_KEYS.ANALYTICS}><Analytics /></ModuleRoute>}
         />
         <Route
+          path={`${seg(ROUTES.analytics)}/campaigns`}
+          element={<ModuleRoute module={MODULE_KEYS.ANALYTICS}><AnalyticsCampaigns /></ModuleRoute>}
+        />
+        <Route
+          path={`${seg(ROUTES.analytics)}/automations`}
+          element={<ModuleRoute module={MODULE_KEYS.ANALYTICS}><AnalyticsAutomations /></ModuleRoute>}
+        />
+        <Route
+          path={`${seg(ROUTES.analytics)}/contacts`}
+          element={<ModuleRoute module={MODULE_KEYS.ANALYTICS}><AnalyticsContacts /></ModuleRoute>}
+        />
+        <Route
           path={seg(ROUTES.reports)}
           element={<ModuleRoute module={MODULE_KEYS.REPORTS}><Reports /></ModuleRoute>}
+        />
+        <Route
+          path={`${seg(ROUTES.reports)}/create`}
+          element={<ModuleRoute module={MODULE_KEYS.REPORTS}><ReportCreate /></ModuleRoute>}
+        />
+        <Route
+          path={`${seg(ROUTES.reports)}/:id`}
+          element={<ModuleRoute module={MODULE_KEYS.REPORTS}><ReportDetails /></ModuleRoute>}
         />
         <Route
           path={seg(ROUTES.notifications)}

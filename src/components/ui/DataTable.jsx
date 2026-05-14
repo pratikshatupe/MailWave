@@ -32,6 +32,7 @@ export default function DataTable({
   actionPermissions,
   role,
   module,
+  displayMode,
 }) {
   // Legacy column shape: { key, label, render }. We let AppTable preserve
   // it as-is — the row renderer treats `column.render(row)` as the source
@@ -58,6 +59,7 @@ export default function DataTable({
       actions={actions}
       actionHandlers={actionHandlers}
       actionPermissions={actionPermissions}
+      displayMode={displayMode}
       className={className}
     />
   );

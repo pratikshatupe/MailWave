@@ -16,10 +16,9 @@
  */
 
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Contact as ContactIcon,
-  Eye,
   Plus,
   Upload,
   Users,
@@ -41,7 +40,7 @@ import ContactFormModal from '../../components/contacts/contact-form-modal.jsx';
 import ImportContactsModal from '../../components/contacts/import-contacts-modal.jsx';
 import ContactFilterBar from '../../components/contacts/contact-filter-bar.jsx';
 import TagManager from '../../components/contacts/tag-manager.jsx';
-import SelectableDataTable from '../../components/common/SelectableDataTable.jsx';
+import ContactTable from '../../components/contacts/contact-table.jsx';
 import BulkActionBar from '../../components/common/BulkActionBar.jsx';
 import ConfirmBulkDeleteModal from '../../components/common/ConfirmBulkDeleteModal.jsx';
 import ExportDropdown from '../../components/common/ExportDropdown.jsx';
@@ -50,7 +49,6 @@ import { ROLES } from '../../config/roles.js';
 import {
   CONTACT_STATUSES,
   getStatusLabel,
-  getStatusTone,
 } from '../../config/contact-fields.js';
 import {
   canCreate,
@@ -317,112 +315,6 @@ export default function Contacts() {
     []
   );
 
-  const tableColumns = useMemo(() => {
-    const cols = [
-      {
-        key: 'fullName',
-        header: 'Full Name',
-        sortable: true,
-        sortType: 'string',
-        render: (row) => (
-          <Link
-            to={`/app/contacts/${row.id}`}
-            className="font-medium text-slate-900 hover:text-indigo-600 dark:text-white dark:hover:text-indigo-300"
-          >
-            {row.fullName}
-          </Link>
-        ),
-      },
-      {
-        key: 'emailId',
-        header: 'Email',
-        sortable: true,
-        sortType: 'string',
-        render: (row) => (
-          <span className="text-slate-600 dark:text-slate-300">{row.emailId || '—'}</span>
-        ),
-      },
-      {
-        key: 'contactNumber',
-        header: 'Contact Number',
-        sortable: true,
-        sortType: 'string',
-        render: (row) => row.contactNumber || '—',
-      },
-    ];
-
-    if (allowSeeAllOrgs) {
-      cols.push({
-        key: 'organisationName',
-        header: 'Company / Organisation',
-        sortable: true,
-        sortType: 'string',
-        render: (row) => row.organisationName || '—',
-      });
-    }
-
-    cols.push(
-      {
-        key: 'status',
-        header: 'Status',
-        sortable: true,
-        sortType: 'string',
-        value: (r) => getStatusLabel(r.status),
-        render: (row) => (
-          <Badge tone={getStatusTone(row.status)}>
-            {getStatusLabel(row.status)}
-          </Badge>
-        ),
-      },
-      {
-        key: 'tags',
-        header: 'Tags',
-        sortable: false,
-        value: (r) => (r.tags || []).join(', '),
-        render: (row) => {
-          const tagsArr = row.tags || [];
-          if (tagsArr.length === 0) {
-            return <span className="text-slate-400 dark:text-slate-500">—</span>;
-          }
-          return (
-            <div className="flex flex-wrap gap-1">
-              {tagsArr.slice(0, 3).map((t) => (
-                <span
-                  key={t}
-                  className="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-200"
-                >
-                  {t}
-                </span>
-              ))}
-              {tagsArr.length > 3 && (
-                <span className="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-500 dark:bg-slate-800 dark:text-slate-400">
-                  +{tagsArr.length - 3}
-                </span>
-              )}
-            </div>
-          );
-        },
-      },
-      {
-        key: 'source',
-        header: 'Source',
-        sortable: true,
-        sortType: 'string',
-        render: (row) => row.source || '—',
-      },
-      {
-        key: 'createdAt',
-        header: 'Created Date',
-        sortable: true,
-        sortType: 'date',
-        value: (r) => r.createdAt,
-        render: (row) => formatDate(row.createdAt),
-      }
-    );
-
-    return cols;
-  }, [allowSeeAllOrgs]);
-
   const selectedContactRows = useMemo(
     () => filtered.filter((c) => selectedIds.includes(c.id)),
     [filtered, selectedIds]
@@ -618,28 +510,25 @@ export default function Contacts() {
         extraActions={bulkExtraActions}
       />
 
-      <SelectableDataTable
-        rows={filtered}
-        columns={tableColumns}
-        rowKey={(r) => r.id}
-        selectedIds={selectedIds}
-        onSelectionChange={setSelectedIds}
+      <ContactTable
+        contacts={filtered}
+        role={role}
         canEdit={allowEdit && !isViewer}
         canDelete={allowDelete && !isViewer}
+        canBulkDelete={allowBulkDelete && !isViewer}
+        canManageTags={allowManageTags && !isViewer}
+        canResubscribe={false}
+        showOrganisation={allowSeeAllOrgs}
+        selectedIds={selectedIds}
+        onSelectionChange={setSelectedIds}
+        onView={(c) => navigate(`/app/contacts/${c.id}`)}
         onEdit={(c) => setEditing(c)}
         onDelete={(c) => setDeleteTarget(c)}
-        rowActions={(row) => (
-          <button
-            type="button"
-            onClick={() => navigate(`/app/contacts/${row.id}`)}
-            className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
-            aria-label="View contact"
-            title="View"
-          >
-            <Eye className="h-4 w-4" />
-          </button>
-        )}
-        emptyMessage="No contacts match your filters."
+        onInlineUpdated={refresh}
+        toastSink={showToast}
+        tagOptions={tagOptions}
+        segmentOptions={segmentOptions}
+        empty="No contacts match your filters."
       />
 
       <ContactFormModal

@@ -41,7 +41,6 @@ import Toast from '../../components/ui/Toast.jsx';
 import ConfirmModal from '../../components/ui/ConfirmModal.jsx';
 import AppTable from '../../components/ui/app-table.jsx';
 import CampaignStatusBadge from '../../components/campaigns/campaign-status-badge.jsx';
-import CampaignActionButtons from '../../components/campaigns/campaign-action-buttons.jsx';
 
 import { useAuth } from '../../context/AuthContext.jsx';
 import { ROLES } from '../../config/roles.js';
@@ -481,22 +480,6 @@ export default function Campaigns() {
         width: '170px',
         render: (row) => fmtDate(row.createdAt),
       },
-      {
-        key: '_actions',
-        label: 'Actions',
-        priority: 1,
-        searchable: false,
-        sortable: false,
-        width: '220px',
-        render: (row) => (
-          <CampaignActionButtons
-            campaign={row}
-            role={role}
-            onAction={handleAction}
-            options={{ canDelete: allowDeleteOption }}
-          />
-        ),
-      },
     ];
     if (isSuperAdmin) {
       base.splice(1, 0, {
@@ -512,8 +495,8 @@ export default function Campaigns() {
   }, [isSuperAdmin, role, allowDeleteOption]);
 
   const filtersBar = (
-    <div className="flex flex-wrap items-center gap-2">
-      <div className="relative w-full max-w-xs">
+    <div className="grid w-full gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6">
+      <div className="relative w-full">
         <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
         <input
           value={filters.q}
@@ -568,15 +551,15 @@ export default function Campaigns() {
         type="date"
         value={filters.from}
         onChange={(e) => setFilters((p) => ({ ...p, from: e.target.value }))}
-        className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-100 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-100 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
       />
       <input
         type="date"
         value={filters.to}
         onChange={(e) => setFilters((p) => ({ ...p, to: e.target.value }))}
-        className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-100 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-100 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
       />
-      <Button variant="ghost" onClick={clearFilters} type="button">
+      <Button variant="ghost" onClick={clearFilters} type="button" className="w-full">
         Clear filters
       </Button>
     </div>
@@ -651,6 +634,7 @@ export default function Campaigns() {
       </div>
 
       <AppTable
+        tableKey="campaigns"
         rows={filtered}
         columns={columns}
         rowKey="id"
@@ -659,7 +643,15 @@ export default function Campaigns() {
         searchable={false}
         displayMode="auto"
         showSerial
-        actions={[]}
+        actions={['view', 'delete']}
+        actionHandlers={{
+          view: (row) => handleAction(ACTION_KEYS.VIEW, row),
+          delete: (row) => handleAction(ACTION_KEYS.DELETE, row),
+        }}
+        actionPermissions={{
+          view: true,
+          delete: allowDeleteOption && !isViewer && !isSuperAdmin,
+        }}
         filters={filtersBar}
         inlineEditDisabled
         mobileConfig={{
@@ -667,9 +659,9 @@ export default function Campaigns() {
           mobileSubtitleKey: 'subjectLine',
           mobileBadgeKey: 'status',
           mobileDetailKeys: isSuperAdmin
-            ? ['organisationName', 'campaignType', 'recipientCount', 'templateName', '_openRate', '_clickRate', 'scheduledAt', 'createdAt', '_actions']
-            : ['campaignType', 'recipientCount', 'templateName', '_openRate', '_clickRate', 'scheduledAt', 'createdAt', '_actions'],
-          mobileActionKeys: [],
+            ? ['organisationName', 'campaignType', 'recipientCount', 'templateName', '_openRate', '_clickRate', 'scheduledAt', 'createdAt']
+            : ['campaignType', 'recipientCount', 'templateName', '_openRate', '_clickRate', 'scheduledAt', 'createdAt'],
+          mobileActionKeys: ['view', 'delete'],
         }}
         empty={
           filtered.length === 0 && baseScoped.length === 0
@@ -717,7 +709,7 @@ function FilterSelect({ value, onChange, options, placeholder }) {
     <select
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-100 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+      className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-100 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
     >
       <option value="">{placeholder}</option>
       {options.map((o) => (

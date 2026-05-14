@@ -38,7 +38,14 @@ export default function Coupons() {
         { key: 'value', label: 'Value' },
         { key: 'usage', label: 'Usage' },
         { key: 'expires', label: 'Expires' },
-        { key: 'status', label: 'Status', render: (r) => <Badge tone={tone[r.status] || 'slate'}>{r.status}</Badge> },
+        {
+          key: 'status',
+          label: 'Status',
+          editable: true,
+          editType: 'select',
+          options: 'couponStatus',
+          render: (r) => <Badge tone={tone[r.status] || 'slate'}>{r.status}</Badge>,
+        },
       ]}
       rows={rows}
     />
