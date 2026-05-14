@@ -14,7 +14,7 @@ import Dashboard from '../pages/dashboard/Dashboard.jsx';
 import Campaigns from '../pages/modules/Campaigns.jsx';
 import WhatsappCampaigns from '../pages/modules/WhatsappCampaigns.jsx';
 import Templates from '../pages/modules/Templates.jsx';
-import Contacts from '../pages/modules/contacts.jsx';
+import Contacts from '../pages/modules/Contacts.jsx';
 import ContactDetails from '../pages/modules/contact-details.jsx';
 import ContactImport from '../pages/modules/contact-import.jsx';
 import ContactSegments from '../pages/modules/contact-segments.jsx';
