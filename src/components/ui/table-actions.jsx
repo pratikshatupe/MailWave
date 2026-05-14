@@ -31,6 +31,8 @@ import {
   Megaphone,
   Settings as SettingsIcon,
   Ticket,
+  Rocket,
+  Archive,
 } from 'lucide-react';
 import IconButton from './IconButton.jsx';
 
@@ -54,6 +56,8 @@ export const ACTION_DEFINITIONS = {
   addTag: { key: 'addTag', icon: TagIcon, tooltip: 'Add Tag', variant: 'primary' },
   unsubscribe: { key: 'unsubscribe', icon: UserMinus, tooltip: 'Unsubscribe', variant: 'neutral' },
   resubscribe: { key: 'resubscribe', icon: UserPlus, tooltip: 'Resubscribe', variant: 'primary' },
+  publish: { key: 'publish', icon: Rocket, tooltip: 'Publish', variant: 'primary', confirm: true },
+  archive: { key: 'archive', icon: Archive, tooltip: 'Archive', variant: 'neutral', confirm: true },
 };
 
 export function actionLabelForCount(count) {

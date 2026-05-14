@@ -9,7 +9,10 @@
       "Bash(npx eslint *)",
       "Bash(node *)",
       "Bash(pkill -f \"vite\")",
-      "Bash(pkill -f \"npm run dev\")"
+      "Bash(pkill -f \"npm run dev\")",
+      "Bash(powershell *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)"
     ]
   }
 }
