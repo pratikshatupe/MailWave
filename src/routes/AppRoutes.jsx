@@ -12,6 +12,9 @@ import DashboardLayout from '../components/layout/DashboardLayout.jsx';
 
 import Dashboard from '../pages/dashboard/Dashboard.jsx';
 import Campaigns from '../pages/modules/Campaigns.jsx';
+import CampaignCreate from '../pages/modules/campaign-create.jsx';
+import CampaignDetails from '../pages/modules/campaign-details.jsx';
+import CampaignAnalytics from '../pages/modules/campaign-analytics.jsx';
 import WhatsappCampaigns from '../pages/modules/WhatsappCampaigns.jsx';
 import Templates from '../pages/modules/Templates.jsx';
 import Contacts from '../pages/modules/Contacts.jsx';
@@ -91,6 +94,22 @@ export default function AppRoutes() {
         <Route
           path={seg(ROUTES.campaigns)}
           element={<ModuleRoute module={MODULE_KEYS.CAMPAIGNS}><Campaigns /></ModuleRoute>}
+        />
+        <Route
+          path={`${seg(ROUTES.campaigns)}/create`}
+          element={<ModuleRoute module={MODULE_KEYS.CAMPAIGNS}><CampaignCreate /></ModuleRoute>}
+        />
+        <Route
+          path={`${seg(ROUTES.campaigns)}/:id`}
+          element={<ModuleRoute module={MODULE_KEYS.CAMPAIGNS}><CampaignDetails /></ModuleRoute>}
+        />
+        <Route
+          path={`${seg(ROUTES.campaigns)}/:id/edit`}
+          element={<ModuleRoute module={MODULE_KEYS.CAMPAIGNS}><CampaignCreate /></ModuleRoute>}
+        />
+        <Route
+          path={`${seg(ROUTES.campaigns)}/:id/analytics`}
+          element={<ModuleRoute module={MODULE_KEYS.CAMPAIGNS}><CampaignAnalytics /></ModuleRoute>}
         />
         <Route
           path={seg(ROUTES.whatsappCampaigns)}

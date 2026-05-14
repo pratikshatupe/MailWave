@@ -21,7 +21,6 @@ import {
   Contact as ContactIcon,
   Eye,
   Plus,
-  Tag as TagIcon,
   Upload,
   Users,
   UserCheck,
@@ -61,7 +60,6 @@ import {
   canImport,
   canBulkDelete,
   canManageTags,
-  canResubscribe,
   canSeeAllOrganisations,
   filterByTenant,
 } from '../../config/contact-permissions.js';
@@ -73,7 +71,6 @@ import {
   bulkDeleteContacts,
   addTagToContacts,
   removeTagFromContacts,
-  unsubscribeContacts,
   getTags,
   getSegments,
   getContactStats,
@@ -116,13 +113,11 @@ export default function Contacts() {
   const [showCreate, setShowCreate] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [editing, setEditing] = useState(null);
-  const [tagging, setTagging] = useState(null);
   const [bulkTagOpen, setBulkTagOpen] = useState(false);
   const [bulkTagMode, setBulkTagMode] = useState('add'); // 'add' | 'remove'
   const [selectedIds, setSelectedIds] = useState([]);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
-  const [unsubscribeTarget, setUnsubscribeTarget] = useState(null);
 
   const tenantId = user?.tenantId;
   const organisationName = user?.tenantId === 'platform' ? 'Platform' : '';
@@ -135,7 +130,6 @@ export default function Contacts() {
   const allowImport = canImport(role);
   const allowBulkDelete = canBulkDelete(role, CONTACT_PERMISSIONS);
   const allowManageTags = canManageTags(role);
-  const allowResubscribe = canResubscribe(role, CONTACT_PERMISSIONS);
 
   /* ---------------------- Data load (re-runs on tick) --------------------- */
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -296,14 +290,6 @@ export default function Contacts() {
     }
   }
 
-  function handleAddTag({ tagName }) {
-    if (!tagging || !tagName) return;
-    addTagToContacts([tagging.id], tagName);
-    setTagging(null);
-    refresh();
-    showToast('success', 'Tag added successfully.');
-  }
-
   function handleBulkTag({ tagName }) {
     if (!tagName || selectedIds.length === 0) return;
     if (bulkTagMode === 'add') {
@@ -315,22 +301,6 @@ export default function Contacts() {
     }
     setBulkTagOpen(false);
     refresh();
-  }
-
-  function handleUnsubscribeOne() {
-    if (!unsubscribeTarget) return;
-    unsubscribeContacts([unsubscribeTarget.id], 'Unsubscribed by admin');
-    setUnsubscribeTarget(null);
-    refresh();
-    showToast('success', 'Contact unsubscribed successfully.');
-  }
-
-  function handleBulkUnsubscribe() {
-    if (selectedIds.length === 0) return;
-    unsubscribeContacts(selectedIds, 'Bulk unsubscribe');
-    setSelectedIds([]);
-    refresh();
-    showToast('success', 'Contacts unsubscribed successfully.');
   }
 
   const exportColumns = useMemo(
@@ -554,35 +524,26 @@ export default function Contacts() {
     </>
   );
 
-  const bulkExtraActions = (
+  const bulkExtraActions = allowManageTags && !isViewer && (
     <>
-      {allowManageTags && !isViewer && (
-        <>
-          <Button
-            variant="ghost"
-            onClick={() => {
-              setBulkTagMode('add');
-              setBulkTagOpen(true);
-            }}
-          >
-            Add Tag
-          </Button>
-          <Button
-            variant="ghost"
-            onClick={() => {
-              setBulkTagMode('remove');
-              setBulkTagOpen(true);
-            }}
-          >
-            Remove Tag
-          </Button>
-        </>
-      )}
-      {!isViewer && (
-        <Button variant="ghost" onClick={handleBulkUnsubscribe}>
-          Unsubscribe
-        </Button>
-      )}
+      <Button
+        variant="ghost"
+        onClick={() => {
+          setBulkTagMode('add');
+          setBulkTagOpen(true);
+        }}
+      >
+        Add Tag
+      </Button>
+      <Button
+        variant="ghost"
+        onClick={() => {
+          setBulkTagMode('remove');
+          setBulkTagOpen(true);
+        }}
+      >
+        Remove Tag
+      </Button>
     </>
   );
 
@@ -614,7 +575,7 @@ export default function Contacts() {
         />
       )}
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-4">
         {kpis.map((k, i) => (
           <button
             key={k.label}
@@ -668,40 +629,15 @@ export default function Contacts() {
         onEdit={(c) => setEditing(c)}
         onDelete={(c) => setDeleteTarget(c)}
         rowActions={(row) => (
-          <>
-            <button
-              type="button"
-              onClick={() => navigate(`/app/contacts/${row.id}`)}
-              className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
-              aria-label="View contact"
-              title="View"
-            >
-              <Eye className="h-4 w-4" />
-            </button>
-            {allowManageTags && !isViewer && (
-              <button
-                type="button"
-                onClick={() => setTagging(row)}
-                className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-indigo-600 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-indigo-300"
-                aria-label="Add tag"
-                title="Add tag"
-              >
-                <TagIcon className="h-4 w-4" />
-              </button>
-            )}
-            {(!isViewer || allowResubscribe) &&
-              row.status !== CONTACT_STATUSES.UNSUBSCRIBED && (
-                <button
-                  type="button"
-                  onClick={() => setUnsubscribeTarget(row)}
-                  className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-amber-600 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-amber-300"
-                  aria-label="Unsubscribe"
-                  title="Unsubscribe"
-                >
-                  <UserMinus className="h-4 w-4" />
-                </button>
-              )}
-          </>
+          <button
+            type="button"
+            onClick={() => navigate(`/app/contacts/${row.id}`)}
+            className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+            aria-label="View contact"
+            title="View"
+          >
+            <Eye className="h-4 w-4" />
+          </button>
         )}
         emptyMessage="No contacts match your filters."
       />
@@ -738,14 +674,6 @@ export default function Contacts() {
       />
 
       <TagManager
-        open={Boolean(tagging)}
-        mode="attach"
-        existingTags={tags}
-        onCancel={() => setTagging(null)}
-        onSubmit={handleAddTag}
-      />
-
-      <TagManager
         open={bulkTagOpen}
         mode="attach"
         existingTags={tags}
@@ -773,20 +701,6 @@ export default function Contacts() {
         entity="contacts"
         onCancel={() => setBulkDeleteOpen(false)}
         onConfirm={handleBulkDelete}
-      />
-
-      <ConfirmModal
-        open={Boolean(unsubscribeTarget)}
-        title="Unsubscribe contact"
-        description={
-          unsubscribeTarget
-            ? `Are you sure you want to unsubscribe ${unsubscribeTarget.fullName}?`
-            : ''
-        }
-        confirmLabel="Unsubscribe"
-        variant="danger"
-        onCancel={() => setUnsubscribeTarget(null)}
-        onConfirm={handleUnsubscribeOne}
       />
     </div>
   );

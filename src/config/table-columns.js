@@ -78,7 +78,7 @@ const CONTACT_COLUMNS = {
     mobileSubtitleKey: 'emailId',
     mobileBadgeKey: 'status',
     mobileDetailKeys: ['contactNumber', 'tags', 'segments', 'source', 'engagementScore', 'organisationName', 'createdAt'],
-    mobileActionKeys: ['view', 'edit', 'addTag', 'unsubscribe', 'delete'],
+    mobileActionKeys: ['view', 'delete'],
   },
   search: {
     keys: ['fullName', 'emailId', 'contactNumber', 'city', 'source', 'organisationName', 'tags'],

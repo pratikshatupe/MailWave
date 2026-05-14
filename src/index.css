@@ -53,6 +53,17 @@ html.dark ::-webkit-scrollbar-thumb:hover {
   background: rgba(129, 140, 248, 0.55);
 }
 
+/* Sidebar scroll: keep scroll working but hide the visible scrollbar line. */
+.sidebar-scroll {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.sidebar-scroll::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
 @layer components {
   .container-x {
     @apply mx-auto w-full max-w-7xl px-4 sm:px-8 lg:px-12;

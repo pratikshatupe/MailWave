@@ -19,29 +19,31 @@ export default function StatCard({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 12 }}
+      initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, delay }}
-      className="rounded-2xl border border-slate-200 bg-white p-5 shadow-soft transition hover:shadow-card dark:border-slate-800 dark:bg-slate-900"
+      transition={{ duration: 0.3, delay }}
+      className="h-full rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:shadow-card dark:border-slate-800 dark:bg-slate-900"
     >
-      <div className="flex items-center justify-between">
+      <div className="flex items-start justify-between gap-3">
         {Icon && (
-          <span className={`grid h-10 w-10 place-items-center rounded-xl bg-gradient-to-br ${tone} text-white shadow-glow`}>
-            <Icon className="h-5 w-5" />
+          <span
+            className={`grid h-9 w-9 flex-shrink-0 place-items-center rounded-xl bg-gradient-to-br ${tone} text-white shadow-glow`}
+          >
+            <Icon className="h-4 w-4" />
           </span>
         )}
         {delta && (
-          <span className={`text-xs font-semibold ${deltaColor}`}>{delta}</span>
+          <span className={`text-[11px] font-semibold ${deltaColor}`}>{delta}</span>
         )}
       </div>
-      <div className="mt-4 text-2xl font-extrabold text-slate-900 dark:text-white">
+      <div className="mt-3 text-xl font-bold leading-tight text-slate-900 dark:text-white">
         {value}
       </div>
-      <div className="text-xs font-medium text-slate-500 dark:text-slate-400">
+      <div className="mt-0.5 text-xs font-medium text-slate-500 dark:text-slate-400">
         {label}
       </div>
       {hint && (
-        <div className="mt-2 text-[11px] text-slate-400 dark:text-slate-500">
+        <div className="mt-1.5 text-[11px] text-slate-400 dark:text-slate-500">
           {hint}
         </div>
       )}

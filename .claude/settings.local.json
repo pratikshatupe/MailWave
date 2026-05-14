@@ -12,7 +12,9 @@
       "Bash(pkill -f \"npm run dev\")",
       "Bash(powershell *)",
       "Bash(git add *)",
-      "Bash(git commit -m ' *)"
+      "Bash(git commit -m ' *)",
+      "Bash(kill %1)",
+      "Bash(wait)"
     ]
   }
 }

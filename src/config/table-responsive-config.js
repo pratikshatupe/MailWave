@@ -38,7 +38,7 @@ export const VISIBLE_PRIORITIES = {
 export const TABLE_LAYOUT = {
   mobile: 'card',
   tablet: 'card',
-  laptop: 'table',
+  laptop: 'card',   // sidebar + laptop viewport → cards prevent horizontal scroll
   desktop: 'table',
   largeDesktop: 'table',
 };

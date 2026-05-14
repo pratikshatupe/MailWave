@@ -435,28 +435,38 @@ html.dark .table-dropdown {
 @media (max-width: 1365px) {
   .app-table-cell,
   .app-table-header th {
-    padding-left: 0.75rem;
-    padding-right: 0.75rem;
+    padding-left: 0.625rem;
+    padding-right: 0.625rem;
   }
   .app-table-cell.app-table-cell-truncate {
-    max-width: 160px;
+    max-width: 140px;
+  }
+}
+
+/* Extra tightening on very small laptop / large tablet viewports. */
+@media (max-width: 1199px) {
+  .app-table-cell,
+  .app-table-header th {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+    font-size: 0.8125rem;
+  }
+  .app-table-cell.app-table-cell-truncate {
+    max-width: 120px;
   }
 }
 
 /* Card grid responds to container width: 1 column on narrow, 2 on wider
- * laptops, 3 on very large screens. Keeps the cards from looking lonely
- * when the desktop forces a card layout because the table did not fit. */
+ * screens. We intentionally cap at 2 columns even on large displays so
+ * cards never shrink below a comfortable reading width. When AppTable
+ * forces card mode on a wide screen because the table had too many columns,
+ * 2-column cards look and read better than cramped 3-column cards. */
 .app-table-card-grid {
   grid-template-columns: minmax(0, 1fr);
 }
-@media (min-width: 768px) {
+@media (min-width: 640px) {
   .app-table-card-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-@media (min-width: 1280px) {
-  .app-table-card-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 

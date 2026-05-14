@@ -6,13 +6,17 @@
  * this render as a table or as cards?" gets the same answer.
  *
  * Rules (from the product spec):
- *   - Mobile / tablet always renders cards.
+ *   - Mobile / tablet always renders cards (< 1024px viewport).
  *   - Laptop and desktop render the table only when the available
- *     container width fits the required table width.
+ *     container width fits the required table width — with a comfortable
+ *     buffer so cells never feel cramped or force a horizontal scroll.
  *   - If there are more than 7 visible columns and the viewport is
  *     below 1440px, render cards (avoid cramming columns into a row).
  *   - Sidebar-open / narrow container automatically forces cards because
  *     we measure the container, not the viewport.
+ *   - On laptop breakpoint (1024–1365px) a 1.20x safety factor is applied
+ *     to required width so the switch happens before horizontal scroll.
+ *   - On desktop (1366–1919px) a 1.10x safety factor is applied.
  */
 
 import {
@@ -97,6 +101,12 @@ export function computeRequiredTableWidth(columns = [], extras = {}) {
  *   displayMode      'auto' (default), 'table', or 'cards'
  *
  * Returns true → render the card grid, false → render the table.
+ *
+ * Safety factors applied per breakpoint so the switch to cards happens
+ * before horizontal scroll appears:
+ *   laptop  (1024–1365 px)  → multiply requiredWidth by 1.20
+ *   desktop (1366–1919 px)  → multiply requiredWidth by 1.10
+ *   large   (≥1920 px)      → no factor (plenty of room)
  */
 export function shouldRenderCards({
   containerWidth,
@@ -112,14 +122,30 @@ export function shouldRenderCards({
   const cw = Number.isFinite(containerWidth) ? containerWidth : 0;
   const rw = Number.isFinite(requiredWidth) ? requiredWidth : 0;
 
-  // Mobile + tablet: always cards.
+  // Mobile + tablet: always cards (< 1024px).
   if (vw > 0 && vw < TABLE_BREAKPOINTS.laptop.min) return true;
+
+  // Laptop breakpoint (1024–1365px): sidebar takes ~260px so the usable
+  // content area is typically 760–1100px — almost always too narrow for a
+  // multi-column table. Switch to cards unconditionally at this range.
+  if (vw > 0 && vw <= TABLE_BREAKPOINTS.laptop.max) return true;
 
   // Many columns on a narrow viewport: cards.
   if (vw > 0 && vw < 1440 && visibleColumns.length > 7) return true;
 
-  // Container too narrow to host the table: cards.
-  if (cw > 0 && rw > 0 && cw < rw) return true;
+  // Container too narrow to host the table (with a per-breakpoint safety
+  // buffer so we switch to cards before the scroll bar appears).
+  if (cw > 0 && rw > 0) {
+    let safetyFactor = 1.0;
+    if (vw > 0 && vw <= TABLE_BREAKPOINTS.laptop.max) {
+      // Laptop: sidebar eats ~260px — be generous with the buffer.
+      safetyFactor = 1.20;
+    } else if (vw > 0 && vw <= TABLE_BREAKPOINTS.desktop.max) {
+      // Desktop: standard buffer to absorb padding & scrollbar width.
+      safetyFactor = 1.10;
+    }
+    if (cw < rw * safetyFactor) return true;
+  }
 
   return false;
 }
