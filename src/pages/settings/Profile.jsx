@@ -5,6 +5,7 @@ import InputField from '../../components/ui/InputField.jsx';
 import Button from '../../components/ui/Button.jsx';
 import Badge from '../../components/ui/Badge.jsx';
 import Toast from '../../components/ui/Toast.jsx';
+import ProfileImageUploader from '../../components/common/ProfileImageUploader.jsx';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { ROLE_BADGES, getRoleLabel } from '../../config/roles.js';
 import { LABELS } from '../../config/labels.js';
@@ -78,9 +79,15 @@ export default function Profile() {
 
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="rounded-2xl border border-slate-200 bg-white p-6 text-center shadow-soft dark:border-slate-800 dark:bg-slate-900">
-          <span className="inline-grid h-20 w-20 place-items-center rounded-2xl bg-gradient-to-br from-indigo-500 via-fuchsia-500 to-cyan-400 text-xl font-bold text-white shadow-glow">
-            {user?.avatarInitials || 'U'}
-          </span>
+          <ProfileImageUploader
+            value={user?.avatarUrl}
+            initials={user?.avatarInitials || 'U'}
+            onChange={(url) => {
+              updateUser({ avatarUrl: url });
+              setToast({ type: 'success', message: url ? 'Profile photo updated.' : 'Profile photo removed.' });
+            }}
+            onError={(message) => setToast({ type: 'error', message })}
+          />
           <div className="mt-3 text-base font-semibold text-slate-900 dark:text-white">
             {user?.name}
           </div>

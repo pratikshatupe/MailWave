@@ -5,8 +5,13 @@ import Topbar from './Topbar.jsx';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { ROUTES } from '../../config/routes.js';
 
+function initialSidebarOpen() {
+  if (typeof window === 'undefined') return true;
+  return window.matchMedia('(min-width: 1024px)').matches;
+}
+
 export default function DashboardLayout() {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(initialSidebarOpen);
   const { logout } = useAuth();
   const navigate = useNavigate();
 
@@ -18,14 +23,11 @@ export default function DashboardLayout() {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
       <div className="flex min-h-screen">
-        <Sidebar
-          open={open}
-          onClose={() => setOpen(false)}
-          onLogout={handleLogout}
-        />
+        <Sidebar open={open} onClose={() => setOpen(false)} />
         <div className="flex min-w-0 flex-1 flex-col">
           <Topbar
-            onOpenSidebar={() => setOpen(true)}
+            sidebarOpen={open}
+            onToggleSidebar={() => setOpen((v) => !v)}
             onLogout={handleLogout}
           />
           <main className="flex-1 p-4 sm:p-6 lg:p-8">

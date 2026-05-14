@@ -29,8 +29,12 @@ export default function ProfileDropdown({ onLogout }) {
         aria-haspopup="menu"
         aria-expanded={open}
       >
-        <span className="grid h-8 w-8 place-items-center rounded-lg bg-gradient-to-br from-indigo-500 via-fuchsia-500 to-cyan-400 text-xs font-bold text-white">
-          {user?.avatarInitials || 'U'}
+        <span className="grid h-8 w-8 place-items-center overflow-hidden rounded-lg bg-gradient-to-br from-indigo-500 via-fuchsia-500 to-cyan-400 text-xs font-bold text-white">
+          {user?.avatarUrl ? (
+            <img src={user.avatarUrl} alt="Profile" className="h-full w-full object-cover" />
+          ) : (
+            user?.avatarInitials || 'U'
+          )}
         </span>
         <div className="hidden text-left text-xs leading-tight md:block">
           <div className="font-semibold text-slate-900 dark:text-white">
@@ -47,8 +51,12 @@ export default function ProfileDropdown({ onLogout }) {
         <div className="absolute right-0 z-50 mt-2 w-72 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-card dark:border-slate-700 dark:bg-slate-900">
           <div className="bg-gradient-to-br from-indigo-500/10 via-fuchsia-500/10 to-cyan-400/10 p-4">
             <div className="flex items-center gap-3">
-              <span className="grid h-12 w-12 place-items-center rounded-xl bg-gradient-to-br from-indigo-500 via-fuchsia-500 to-cyan-400 text-sm font-bold text-white shadow-glow">
-                {user?.avatarInitials || 'U'}
+              <span className="grid h-12 w-12 place-items-center overflow-hidden rounded-xl bg-gradient-to-br from-indigo-500 via-fuchsia-500 to-cyan-400 text-sm font-bold text-white shadow-glow">
+                {user?.avatarUrl ? (
+                  <img src={user.avatarUrl} alt="Profile" className="h-full w-full object-cover" />
+                ) : (
+                  user?.avatarInitials || 'U'
+                )}
               </span>
               <div className="min-w-0">
                 <div className="truncate text-sm font-semibold text-slate-900 dark:text-white">

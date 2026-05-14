@@ -207,25 +207,39 @@ export const SEGMENT_OPERATORS = [
 
 /**
  * Contact CSV import column targets. Used by the import modal mapper.
+ *
+ * `aliases` are case-insensitive header names auto-mapper will accept in
+ * addition to `key` and `label`. Keep this in sync with the downloadable
+ * template header (utils inside the import modal).
  */
 export const CONTACT_IMPORT_FIELDS = [
-  { key: 'fullName', label: 'Full Name', required: true },
-  { key: 'emailId', label: 'Email ID', required: true },
-  { key: 'contactNumber', label: 'Contact Number' },
-  { key: 'organisationName', label: 'Organisation' },
+  { key: 'fullName', label: 'Full Name', required: true, aliases: ['full name', 'name'] },
+  { key: 'emailId', label: 'Email ID', required: true, aliases: ['email', 'emailid', 'email address'] },
+  { key: 'contactNumber', label: 'Contact Number', aliases: ['mobile', 'phone number'] },
+  { key: 'countryCode', label: 'Country Code', aliases: ['country_code', 'dial code', 'dialcode'] },
+  { key: 'phone', label: 'Phone', aliases: ['national phone', 'national number'] },
+  { key: 'company', label: 'Company', aliases: ['company name'] },
+  { key: 'organisationName', label: 'Organisation', aliases: ['organization', 'org', 'organisation'] },
+  { key: 'jobTitle', label: 'Job Title', aliases: ['title', 'designation'] },
   { key: 'country', label: 'Country' },
   { key: 'state', label: 'State' },
   { key: 'city', label: 'City' },
-  { key: 'postalCode', label: 'Postal Code' },
+  { key: 'postalCode', label: 'Postal Code', aliases: ['zip', 'zip code', 'postcode'] },
   { key: 'source', label: 'Source' },
-  { key: 'status', label: 'Status' },
   { key: 'tags', label: 'Tags' },
+  { key: 'status', label: 'Status' },
+  { key: 'emailConsent', label: 'Email Consent', aliases: ['email_consent'] },
+  { key: 'whatsappConsent', label: 'WhatsApp Consent', aliases: ['whatsapp_consent'] },
+  { key: 'whatsappOptInStatus', label: 'WhatsApp Opt-In Status', aliases: ['whatsapp_opt_in_status', 'whatsapp optin', 'whatsapp opt in'] },
+  { key: 'notes', label: 'Notes', aliases: ['note', 'remarks'] },
   { key: 'segments', label: 'Segments' },
-  { key: 'emailConsent', label: 'Email Consent' },
-  { key: 'whatsappConsent', label: 'WhatsApp Consent' },
-  { key: 'whatsappOptInStatus', label: 'WhatsApp Opt-In Status' },
-  { key: 'notes', label: 'Notes' },
 ];
+
+/**
+ * Allowed values for boolean-style consent CSV columns.
+ */
+export const CONSENT_TRUE_VALUES = new Set(['true', '1', 'yes', 'y']);
+export const CONSENT_FALSE_VALUES = new Set(['false', '0', 'no', 'n', '']);
 
 export default {
   CONTACT_STATUSES,
@@ -243,4 +257,6 @@ export default {
   SEGMENT_FIELDS,
   SEGMENT_OPERATORS,
   CONTACT_IMPORT_FIELDS,
+  CONSENT_TRUE_VALUES,
+  CONSENT_FALSE_VALUES,
 };

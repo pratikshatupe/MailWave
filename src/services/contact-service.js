@@ -21,7 +21,12 @@ import {
   SAMPLE_SEGMENTS_SEED,
 } from '../mock/contacts.js';
 import { buildActivityForContact } from '../mock/contact-activity.js';
-import { CONTACT_STATUSES } from '../config/contact-fields.js';
+import {
+  CONTACT_STATUSES,
+  CONSENT_TRUE_VALUES,
+  CONSENT_FALSE_VALUES,
+  WHATSAPP_OPT_IN_STATUSES,
+} from '../config/contact-fields.js';
 
 const KEYS = {
   contacts: 'mailwave-contacts',
@@ -373,22 +378,111 @@ export function parseCsv(text) {
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+const ALLOWED_STATUSES = new Set([
+  CONTACT_STATUSES.SUBSCRIBED,
+  CONTACT_STATUSES.UNSUBSCRIBED,
+  CONTACT_STATUSES.BOUNCED,
+  CONTACT_STATUSES.COMPLAINED,
+  'pending',
+  CONTACT_STATUSES.INVALID,
+]);
+
+const ALLOWED_WHATSAPP_STATUSES = new Set([
+  WHATSAPP_OPT_IN_STATUSES.OPTED_IN,
+  WHATSAPP_OPT_IN_STATUSES.OPTED_OUT,
+  WHATSAPP_OPT_IN_STATUSES.PENDING,
+]);
+
+/**
+ * Parse a CSV cell into a boolean. Returns:
+ *   { ok: true, value: boolean }      when the cell matches a known token
+ *   { ok: false, value: undefined }   for anything else (caller reports error)
+ *
+ * An empty string maps to `false` so that omitting the column does not flag
+ * every row as invalid.
+ */
+export function parseConsent(raw) {
+  const s = String(raw ?? '').trim().toLowerCase();
+  if (CONSENT_TRUE_VALUES.has(s)) return { ok: true, value: true };
+  if (CONSENT_FALSE_VALUES.has(s)) return { ok: true, value: false };
+  return { ok: false, value: undefined };
+}
+
+/**
+ * Validate one mapped import row. Returns an array of structured errors:
+ *   [{ field, reason }]
+ *
+ * The modal renders these in a table with Row / Field / Reason columns.
+ * `importContacts` reads `.reason` on the first entry to mirror the legacy
+ * error string into the summary.
+ */
 export function validateImportRow(row) {
   const errors = [];
+  const push = (field, reason) => errors.push({ field, reason });
+
   if (!row.fullName || row.fullName.trim().length < 2) {
-    errors.push('Full Name is required.');
+    push('fullName', 'Full Name is required.');
   } else if (!/^[A-Za-z ]+$/.test(row.fullName.trim())) {
-    errors.push('Full Name must contain only letters and spaces.');
+    push('fullName', 'Full Name must contain only letters and spaces.');
   }
-  if (!row.emailId || !EMAIL_RE.test(row.emailId.trim())) {
-    errors.push('Invalid Email ID.');
+
+  if (!row.emailId || !EMAIL_RE.test(String(row.emailId).trim())) {
+    push('emailId', 'Invalid Email ID.');
   }
+
+  const whatsappConsent = row.whatsappConsent;
+  const phoneProvided = Boolean(
+    (row.contactNumber && String(row.contactNumber).trim()) ||
+      (row.phone && String(row.phone).trim())
+  );
+
   if (row.contactNumber) {
-    const cn = String(row.contactNumber).trim();
-    if (!/^[0-9]{10}$/.test(cn) || !/^[6-9]/.test(cn)) {
-      errors.push('Invalid Contact Number.');
+    const cn = String(row.contactNumber).trim().replace(/\D/g, '');
+    if (cn.length < 6 || cn.length > 15) {
+      push('contactNumber', 'Contact Number must be 6 to 15 digits.');
+    } else if ((row.country || '').toLowerCase() === 'india' && !/^[6-9]\d{9}$/.test(cn)) {
+      push('contactNumber', 'Indian numbers must be 10 digits starting with 6, 7, 8 or 9.');
     }
   }
+
+  if (row.countryCode) {
+    if (!/^\+?\d{1,4}$/.test(String(row.countryCode).trim())) {
+      push('countryCode', 'Country Code must look like +91 or 91.');
+    }
+  }
+
+  if (row.status) {
+    if (!ALLOWED_STATUSES.has(String(row.status).trim().toLowerCase())) {
+      push('status', `Status must be one of: ${[...ALLOWED_STATUSES].join(', ')}.`);
+    }
+  }
+
+  if (row.emailConsent !== undefined && row.emailConsent !== '') {
+    if (!parseConsent(row.emailConsent).ok) {
+      push('emailConsent', 'Email Consent must be true or false.');
+    }
+  }
+  let parsedWhatsappConsent = null;
+  if (whatsappConsent !== undefined && whatsappConsent !== '') {
+    parsedWhatsappConsent = parseConsent(whatsappConsent);
+    if (!parsedWhatsappConsent.ok) {
+      push('whatsappConsent', 'WhatsApp Consent must be true or false.');
+    }
+  }
+
+  if (parsedWhatsappConsent?.ok && parsedWhatsappConsent.value && !phoneProvided) {
+    push('phone', 'Phone is required when WhatsApp Consent is true.');
+  }
+
+  if (row.whatsappOptInStatus) {
+    if (!ALLOWED_WHATSAPP_STATUSES.has(String(row.whatsappOptInStatus).trim().toLowerCase())) {
+      push(
+        'whatsappOptInStatus',
+        `WhatsApp Opt-In Status must be one of: ${[...ALLOWED_WHATSAPP_STATUSES].join(', ')}.`
+      );
+    }
+  }
+
   return errors;
 }
 
@@ -416,7 +510,12 @@ export function importContacts(rows = [], duplicateMode = 'skip', context = {}) 
     const errors = validateImportRow(row);
     if (errors.length > 0) {
       summary.invalid += 1;
-      summary.failed.push({ row: idx + 1, emailId: row.emailId || '', reason: errors[0] });
+      summary.failed.push({
+        row: idx + 1,
+        emailId: row.emailId || '',
+        field: errors[0].field,
+        reason: errors[0].reason,
+      });
       return;
     }
     summary.valid += 1;
@@ -446,13 +545,19 @@ export function importContacts(rows = [], duplicateMode = 'skip', context = {}) 
         // fall through to push a new record below
       }
     }
+    const emailConsentParsed = parseConsent(row.emailConsent);
+    const whatsappConsentParsed = parseConsent(row.whatsappConsent);
     list.push({
       id: newId('c'),
       tenantId,
-      organisationName: row.organisationName || organisationName || '',
+      organisationName: row.organisationName || row.company || organisationName || '',
+      company: row.company || row.organisationName || '',
+      jobTitle: row.jobTitle || '',
       fullName: row.fullName.trim(),
       emailId: row.emailId.trim(),
-      contactNumber: row.contactNumber || '',
+      contactNumber: row.contactNumber || row.phone || '',
+      countryCode: row.countryCode || '',
+      phone: row.phone || row.contactNumber || '',
       country: row.country || '',
       state: row.state || '',
       city: row.city || '',
@@ -461,7 +566,7 @@ export function importContacts(rows = [], duplicateMode = 'skip', context = {}) 
         ? Array.isArray(row.tags)
           ? row.tags
           : String(row.tags)
-              .split(/[;|]/)
+              .split(/[,;|]/)
               .map((t) => t.trim())
               .filter(Boolean)
         : [],
@@ -469,15 +574,15 @@ export function importContacts(rows = [], duplicateMode = 'skip', context = {}) 
         ? Array.isArray(row.segments)
           ? row.segments
           : String(row.segments)
-              .split(/[;|]/)
+              .split(/[,;|]/)
               .map((t) => t.trim())
               .filter(Boolean)
         : [],
       source: row.source || 'CSV Import',
-      status: row.status || CONTACT_STATUSES.SUBSCRIBED,
-      emailConsent: row.emailConsent !== false,
-      whatsappConsent: Boolean(row.whatsappConsent),
-      whatsappOptInStatus: row.whatsappOptInStatus || 'pending',
+      status: (row.status || CONTACT_STATUSES.SUBSCRIBED).toLowerCase(),
+      emailConsent: emailConsentParsed.ok ? emailConsentParsed.value : true,
+      whatsappConsent: whatsappConsentParsed.ok ? whatsappConsentParsed.value : false,
+      whatsappOptInStatus: (row.whatsappOptInStatus || 'pending').toLowerCase(),
       engagementScore: 0,
       notes: row.notes || '',
       unsubscribeReason: '',

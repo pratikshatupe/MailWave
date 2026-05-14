@@ -1,10 +1,9 @@
-import { LogOut, X, Lock } from 'lucide-react';
+import { X, Lock } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import Logo from '../common/Logo.jsx';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { getNavigationForRole } from '../../config/modules.js';
 import { ROLE_BADGES, getRoleLabel } from '../../config/roles.js';
-import { LABELS } from '../../config/labels.js';
 import { ROUTES } from '../../config/routes.js';
 
 /**
@@ -46,7 +45,7 @@ function NavItem({ item, onNavigate }) {
   );
 }
 
-export default function Sidebar({ open, onClose, onLogout }) {
+export default function Sidebar({ open, onClose }) {
   const { user, role } = useAuth();
   const items = getNavigationForRole(role);
   const badge = role ? ROLE_BADGES[role] : null;
@@ -72,8 +71,12 @@ export default function Sidebar({ open, onClose, onLogout }) {
 
       <div className="border-t border-slate-200 p-3 dark:border-slate-800">
         <div className="flex items-center gap-3 rounded-xl bg-slate-50 p-3 dark:bg-slate-800/60">
-          <span className="grid h-10 w-10 flex-shrink-0 place-items-center rounded-xl bg-gradient-to-br from-indigo-500 via-fuchsia-500 to-cyan-400 text-xs font-bold text-white shadow-glow">
-            {user?.avatarInitials || 'U'}
+          <span className="grid h-10 w-10 flex-shrink-0 place-items-center overflow-hidden rounded-xl bg-gradient-to-br from-indigo-500 via-fuchsia-500 to-cyan-400 text-xs font-bold text-white shadow-glow">
+            {user?.avatarUrl ? (
+              <img src={user.avatarUrl} alt="Profile" className="h-full w-full object-cover" />
+            ) : (
+              user?.avatarInitials || 'U'
+            )}
           </span>
           <div className="min-w-0">
             <div className="truncate text-sm font-semibold text-slate-900 dark:text-white">
@@ -91,22 +94,17 @@ export default function Sidebar({ open, onClose, onLogout }) {
             </div>
           </div>
         </div>
-
-        <button
-          onClick={onLogout}
-          className="mt-2 flex w-full cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-600 transition hover:bg-rose-50 hover:text-rose-700 dark:text-slate-300 dark:hover:bg-rose-500/10 dark:hover:text-rose-300"
-        >
-          <LogOut className="h-4 w-4" /> {LABELS.logOut}
-        </button>
       </div>
     </div>
   );
 
   return (
     <>
-      <aside className="hidden w-64 flex-shrink-0 border-r border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950 lg:block">
-        <div className="sticky top-0 h-screen">{inner}</div>
-      </aside>
+      {open && (
+        <aside className="hidden w-64 flex-shrink-0 border-r border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950 lg:block">
+          <div className="sticky top-0 h-screen">{inner}</div>
+        </aside>
+      )}
 
       {open && (
         <div className="fixed inset-0 z-40 lg:hidden">

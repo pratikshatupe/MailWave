@@ -20,7 +20,7 @@ function deriveTitle(pathname, items) {
   return LABELS.dashboard;
 }
 
-export default function Topbar({ onOpenSidebar, onLogout }) {
+export default function Topbar({ sidebarOpen, onToggleSidebar, onLogout }) {
   const { role } = useAuth();
   const { pathname } = useLocation();
   const items = useMemo(() => getNavigationForRole(role), [role]);
@@ -30,9 +30,10 @@ export default function Topbar({ onOpenSidebar, onLogout }) {
     <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/85 backdrop-blur-xl dark:border-slate-800 dark:bg-slate-950/85">
       <div className="flex h-16 items-center gap-3 px-4 sm:px-6 lg:px-8">
         <button
-          onClick={onOpenSidebar}
-          className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-xl border border-slate-200 text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800 lg:hidden"
-          aria-label="Open menu"
+          onClick={onToggleSidebar}
+          className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-xl border border-slate-200 text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+          aria-label={sidebarOpen ? 'Close menu' : 'Open menu'}
+          aria-expanded={sidebarOpen}
         >
           <Menu className="h-5 w-5" />
         </button>

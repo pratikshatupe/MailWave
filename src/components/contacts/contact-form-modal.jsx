@@ -29,6 +29,7 @@ import InputField from '../ui/InputField.jsx';
 import SelectField from '../ui/SelectField.jsx';
 import TextAreaField from '../ui/TextAreaField.jsx';
 import Button from '../ui/Button.jsx';
+import CountryCodeSelect from '../common/CountryCodeSelect.jsx';
 import {
   validateFullName,
   validateEmailId,
@@ -44,13 +45,41 @@ import {
   STATES_BY_COUNTRY,
   CITIES_BY_STATE,
 } from '../../config/contact-fields.js';
+import {
+  DEFAULT_COUNTRY,
+  buildFullPhone,
+  getCountryByCode,
+  getCountryByDial,
+} from '../../config/country-codes.js';
 import { isWhatsappCampaignsEnabled } from '../../config/modules.js';
 import { existsEmail } from '../../services/contact-service.js';
+
+/**
+ * Normalise whatever was stored on the contact previously (ISO code,
+ * dial code, or nothing) into an ISO country code for CountryCodeSelect.
+ * Falls back to the project default when the value can't be resolved.
+ */
+function resolveCountryIso(stored) {
+  if (!stored) return DEFAULT_COUNTRY;
+  const raw = String(stored).trim();
+  if (!raw) return DEFAULT_COUNTRY;
+  // Dial code form: "+91", "91", "+1"
+  if (raw.startsWith('+') || /^\d+$/.test(raw)) {
+    const normalised = raw.startsWith('+') ? raw : `+${raw}`;
+    return getCountryByDial(normalised)?.code || DEFAULT_COUNTRY;
+  }
+  // Assume ISO ("IN", "AE") — accept any casing.
+  return getCountryByCode(raw.toUpperCase())?.code || DEFAULT_COUNTRY;
+}
+
+const DEFAULT_COUNTRY_META = getCountryByCode(DEFAULT_COUNTRY);
 
 const EMPTY = {
   fullName: '',
   emailId: '',
   contactNumber: '',
+  countryCode: DEFAULT_COUNTRY,
+  timezone: DEFAULT_COUNTRY_META?.timezone || 'UTC',
   country: '',
   state: '',
   city: '',
@@ -157,9 +186,16 @@ export default function ContactFormModal({
       return;
     }
     if (mode === 'edit' && initial) {
+      const resolvedIso = resolveCountryIso(initial.countryCode);
+      const resolvedCountry = getCountryByCode(resolvedIso);
       const next = {
         ...EMPTY,
         ...initial,
+        countryCode: resolvedIso,
+        // Prefer the explicit national number, otherwise the legacy
+        // `contactNumber` value so old contacts edit without losing data.
+        contactNumber: initial.phoneNumber || initial.phone || initial.contactNumber || '',
+        timezone: initial.timezone || resolvedCountry?.timezone || EMPTY.timezone,
         tags: Array.isArray(initial.tags) ? initial.tags.join(', ') : initial.tags || '',
         segments: Array.isArray(initial.segments)
           ? initial.segments.join(', ')
@@ -199,6 +235,30 @@ export default function ContactFormModal({
   function setError(name, msg) {
     setErrors((p) => ({ ...p, [name]: msg }));
   }
+
+  function handleCountryChange(code, country) {
+    setValues((p) => {
+      const tzPool = country?.timezones || (country?.timezone ? [country.timezone] : []);
+      const keepTz = tzPool.includes(p.timezone);
+      return {
+        ...p,
+        countryCode: code,
+        timezone: keepTz ? p.timezone : country?.timezone || p.timezone,
+      };
+    });
+    // Re-validate the phone with the new country rules on next blur.
+    setErrors((p) => ({ ...p, contactNumber: undefined }));
+  }
+
+  const selectedCountryMeta = useMemo(
+    () => getCountryByCode(values.countryCode) || DEFAULT_COUNTRY_META,
+    [values.countryCode]
+  );
+  const dialCode = selectedCountryMeta?.dial || '+91';
+  const timezoneOptions = useMemo(() => {
+    const pool = selectedCountryMeta?.timezones || [selectedCountryMeta?.timezone].filter(Boolean);
+    return pool.map((tz) => ({ value: tz, label: tz }));
+  }, [selectedCountryMeta]);
 
   function handleChange(e) {
     const { name, value } = e.target;
@@ -244,10 +304,12 @@ export default function ContactFormModal({
     }
     // Contact Number is optional, but becomes required when WhatsApp Consent
     // is on. Either way the format must validate when something is entered.
+    // The selected dial code drives which rule the central validator applies
+    // (India: 10-digit 6-9; other: flexible 6-15).
     if (whatsappEnabled && values.whatsappConsent) {
-      next.contactNumber = validateContactNumber(values.contactNumber);
+      next.contactNumber = validateContactNumber(values.contactNumber, dialCode);
     } else if (values.contactNumber) {
-      next.contactNumber = validateContactNumber(values.contactNumber);
+      next.contactNumber = validateContactNumber(values.contactNumber, dialCode);
     }
     if (values.postalCode) {
       next.postalCode = validatePostalCode(values.postalCode);
@@ -275,12 +337,22 @@ export default function ContactFormModal({
     if (!validateAll()) return;
     setSubmitting(true);
     try {
+      const nationalNumber = String(values.contactNumber || '').trim();
+      const fullPhoneNumber = nationalNumber
+        ? buildFullPhone(selectedCountryMeta, nationalNumber)
+        : '';
       const payload = {
         ...values,
         tenantId,
         organisationName,
         tags: dedupeCsv(values.tags),
         segments: dedupeCsv(values.segments),
+        countryCode: dialCode,
+        phoneNumber: nationalNumber,
+        phone: nationalNumber,
+        contactNumber: nationalNumber,
+        fullPhoneNumber,
+        timezone: values.timezone,
         whatsappConsent: whatsappEnabled ? !!values.whatsappConsent : false,
         whatsappOptInStatus: whatsappEnabled
           ? values.whatsappConsent
@@ -359,20 +431,67 @@ export default function ContactFormModal({
                   }}
                   onValidate={setError}
                 />
-                <InputField
-                  field="contactNumber"
-                  required={whatsappEnabled && values.whatsappConsent}
-                  value={values.contactNumber}
-                  onChange={handleChange}
-                  error={errors.contactNumber}
-                  validator={(v) => {
-                    if (whatsappEnabled && values.whatsappConsent) {
-                      return validateContactNumber(v);
-                    }
-                    return v ? validateContactNumber(v) : '';
-                  }}
-                  onValidate={setError}
-                />
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
+                    Contact Number
+                    {whatsappEnabled && values.whatsappConsent && (
+                      <span className="required-marker text-rose-600 dark:text-rose-400">*</span>
+                    )}
+                  </label>
+                  <div className="flex flex-col gap-2 sm:flex-row">
+                    <CountryCodeSelect
+                      value={values.countryCode}
+                      onChange={handleCountryChange}
+                      className="sm:w-44"
+                    />
+                    <div className="flex-1">
+                      <InputField
+                        label=""
+                        field="contactNumber"
+                        required={whatsappEnabled && values.whatsappConsent}
+                        value={values.contactNumber}
+                        onChange={handleChange}
+                        error={errors.contactNumber}
+                        placeholder={
+                          values.countryCode === 'IN'
+                            ? '10-digit number starting 6-9'
+                            : '6 to 15 digits'
+                        }
+                        validator={(v) => {
+                          if (whatsappEnabled && values.whatsappConsent) {
+                            return validateContactNumber(v, dialCode);
+                          }
+                          return v ? validateContactNumber(v, dialCode) : '';
+                        }}
+                        onValidate={setError}
+                      />
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
+                    Timezone
+                  </label>
+                  {timezoneOptions.length > 1 ? (
+                    <SelectField
+                      name="timezone"
+                      label=""
+                      value={values.timezone}
+                      onChange={handleChange}
+                      options={timezoneOptions}
+                      placeholder="Select Timezone"
+                    />
+                  ) : (
+                    <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-700 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-200">
+                      <span className="inline-flex h-6 items-center rounded-full bg-white px-2 text-[11px] font-semibold text-slate-500 ring-1 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700">
+                        Auto
+                      </span>
+                      <span className="truncate">{values.timezone || '—'}</span>
+                    </div>
+                  )}
+                </div>
               </div>
             </Section>
 

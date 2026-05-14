@@ -18,19 +18,22 @@ import {
   X,
   CheckCircle2,
   AlertCircle,
+  Download,
+  Info,
 } from 'lucide-react';
 import Button from '../ui/Button.jsx';
 import {
   parseCsv,
   validateImportRow,
   importContacts,
+  downloadCsv,
 } from '../../services/contact-service.js';
 import { CONTACT_IMPORT_FIELDS } from '../../config/contact-fields.js';
 
 const DUPLICATE_OPTIONS = [
   { value: 'skip', label: 'Skip duplicates', hint: 'Existing contacts are left alone.' },
   { value: 'update', label: 'Update existing', hint: 'Merge new data into existing contacts.' },
-  { value: 'createNew', label: 'Create new only', hint: 'Add even if duplicates exist.' },
+  { value: 'createNew', label: 'Import anyway', hint: 'Add a new contact even when a duplicate exists.' },
 ];
 
 const STEPS = [
@@ -41,19 +44,98 @@ const STEPS = [
   'Summary',
 ];
 
+/**
+ * Header / sample data for the downloadable CSV template. The order
+ * matches the field list in the import spec and is rendered as the
+ * file's literal column header — so callers can paste this file
+ * directly without any further mapping.
+ */
+const TEMPLATE_HEADERS = [
+  'fullName',
+  'email',
+  'contactNumber',
+  'countryCode',
+  'phone',
+  'company',
+  'organisationName',
+  'jobTitle',
+  'country',
+  'state',
+  'city',
+  'postalCode',
+  'source',
+  'tags',
+  'status',
+  'emailConsent',
+  'whatsappConsent',
+  'whatsappOptInStatus',
+  'notes',
+];
+
+const TEMPLATE_SAMPLE_ROW = [
+  'Rahul Sharma',
+  'rahul@example.com',
+  '9876543210',
+  '+91',
+  '9876543210',
+  'MailWave',
+  'MailWave Pvt Ltd',
+  'Marketing Manager',
+  'India',
+  'Maharashtra',
+  'Pune',
+  '411001',
+  'Website',
+  'newsletter,vip',
+  'subscribed',
+  'true',
+  'true',
+  'opted_in',
+  'Sample note',
+];
+
+const ALLOWED_STATUS_VALUES = [
+  'subscribed',
+  'unsubscribed',
+  'bounced',
+  'complained',
+  'pending',
+  'invalid',
+];
+
+const ALLOWED_WHATSAPP_VALUES = ['opted_in', 'opted_out', 'pending'];
+
+function escapeCsvCell(value) {
+  const s = String(value ?? '');
+  if (/[",\n]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
+  return s;
+}
+
+function buildTemplateCsv() {
+  const lines = [
+    TEMPLATE_HEADERS.map(escapeCsvCell).join(','),
+    TEMPLATE_SAMPLE_ROW.map(escapeCsvCell).join(','),
+  ];
+  // BOM keeps Excel happy with non-ASCII names.
+  return '﻿' + lines.join('\r\n');
+}
+
 function autoMap(headers) {
   const map = {};
+  const normalised = headers.map((h) => ({ raw: h, norm: h.toLowerCase().trim() }));
   CONTACT_IMPORT_FIELDS.forEach((field) => {
-    const target = field.label.toLowerCase();
-    const fallback = field.key.toLowerCase();
-    const match = headers.find((h) => {
-      const lowered = h.toLowerCase().trim();
-      return lowered === target || lowered === fallback;
-    });
-    if (match) map[field.key] = match;
+    const candidates = new Set(
+      [field.key, field.label, ...(field.aliases || [])].map((s) => s.toLowerCase())
+    );
+    const match = normalised.find((h) => candidates.has(h.norm));
+    if (match) map[field.key] = match.raw;
   });
   return map;
 }
+
+const FIELD_LABEL_BY_KEY = Object.fromEntries(
+  CONTACT_IMPORT_FIELDS.map((f) => [f.key, f.label])
+);
 
 export default function ImportContactsModal({
   open,
@@ -143,11 +225,22 @@ export default function ImportContactsModal({
         valid += 1;
       } else {
         invalid += 1;
-        invalidDetails.push({ row: idx + 1, emailId: row.emailId, reason: errors[0] });
+        errors.forEach((err) => {
+          invalidDetails.push({
+            row: idx + 1,
+            emailId: row.emailId,
+            field: err.field,
+            reason: err.reason,
+          });
+        });
       }
     });
     return { valid, invalid, invalidDetails };
   }, [mappedRows]);
+
+  function handleDownloadTemplate() {
+    downloadCsv('mailwave-contact-import-template.csv', buildTemplateCsv());
+  }
 
   function handleConfirm() {
     const result = importContacts(mappedRows, duplicateMode, {
@@ -223,25 +316,102 @@ export default function ImportContactsModal({
           )}
 
           {step === 0 && (
-            <div className="rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 px-6 py-10 text-center dark:border-slate-700 dark:bg-slate-900/40">
-              <Upload className="mx-auto h-10 w-10 text-indigo-500" />
-              <h4 className="mt-3 text-base font-semibold text-slate-900 dark:text-white">
-                Upload a CSV file
-              </h4>
-              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                Your CSV should include columns for Full Name and Email ID.
-              </p>
-              <input
-                ref={fileRef}
-                type="file"
-                accept=".csv,text/csv"
-                className="hidden"
-                onChange={(e) => handleFile(e.target.files?.[0])}
-              />
-              <div className="mt-5">
-                <Button onClick={() => fileRef.current?.click()}>
-                  <Upload className="h-4 w-4" /> Choose CSV file
+            <div className="space-y-4">
+              <div className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-center">
+                <div className="rounded-2xl border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm text-indigo-800 dark:border-indigo-500/30 dark:bg-indigo-500/10 dark:text-indigo-200">
+                  <div className="flex items-start gap-2">
+                    <Download className="mt-0.5 h-4 w-4 flex-shrink-0" />
+                    <div>
+                      <div className="font-semibold">Need a template?</div>
+                      <div className="text-xs opacity-80">
+                        Download our sample CSV with every supported column
+                        and one example row.
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <Button variant="outline" onClick={handleDownloadTemplate}>
+                  <Download className="h-4 w-4" /> Download template
                 </Button>
+              </div>
+
+              <div className="rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 px-6 py-8 text-center dark:border-slate-700 dark:bg-slate-900/40">
+                <Upload className="mx-auto h-10 w-10 text-indigo-500" />
+                <h4 className="mt-3 text-base font-semibold text-slate-900 dark:text-white">
+                  Upload a CSV file
+                </h4>
+                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                  Accepted format: .csv (UTF-8). Maximum recommended size 5 MB.
+                </p>
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept=".csv,text/csv"
+                  className="hidden"
+                  onChange={(e) => handleFile(e.target.files?.[0])}
+                />
+                <div className="mt-5">
+                  <Button onClick={() => fileRef.current?.click()}>
+                    <Upload className="h-4 w-4" /> Choose CSV file
+                  </Button>
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-xs leading-relaxed dark:border-slate-800 dark:bg-slate-900">
+                <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-slate-800 dark:text-slate-100">
+                  <Info className="h-4 w-4 text-indigo-500" />
+                  Instructions
+                </div>
+                <ul className="list-disc space-y-1 pl-5 text-slate-600 dark:text-slate-300">
+                  <li>
+                    <strong>fullName</strong> and <strong>email</strong> are
+                    required. Email must be a valid address.
+                  </li>
+                  <li>
+                    Phone is optional. If <strong>whatsappConsent</strong> is
+                    <code className="mx-1 rounded bg-slate-100 px-1 py-0.5 dark:bg-slate-800">true</code>
+                    then a phone number is required.
+                  </li>
+                  <li>
+                    For India, phone must be 10 digits starting with 6, 7, 8
+                    or 9. Other countries: 6 – 15 digits.
+                  </li>
+                  <li>
+                    Tags can be comma separated (e.g.
+                    <code className="mx-1 rounded bg-slate-100 px-1 py-0.5 dark:bg-slate-800">newsletter,vip</code>).
+                  </li>
+                  <li>
+                    Boolean fields (<strong>emailConsent</strong>,{' '}
+                    <strong>whatsappConsent</strong>) accept
+                    <code className="mx-1 rounded bg-slate-100 px-1 py-0.5 dark:bg-slate-800">true</code>/
+                    <code className="mx-1 rounded bg-slate-100 px-1 py-0.5 dark:bg-slate-800">false</code>.
+                  </li>
+                  <li>
+                    Allowed <strong>status</strong> values:{' '}
+                    {ALLOWED_STATUS_VALUES.map((s) => (
+                      <code
+                        key={s}
+                        className="mx-0.5 rounded bg-slate-100 px-1 py-0.5 dark:bg-slate-800"
+                      >
+                        {s}
+                      </code>
+                    ))}
+                    .
+                  </li>
+                  <li>
+                    Allowed <strong>whatsappOptInStatus</strong>:{' '}
+                    {ALLOWED_WHATSAPP_VALUES.map((s) => (
+                      <code
+                        key={s}
+                        className="mx-0.5 rounded bg-slate-100 px-1 py-0.5 dark:bg-slate-800"
+                      >
+                        {s}
+                      </code>
+                    ))}
+                    .
+                  </li>
+                  <li>Do not remove the required column headers from the template.</li>
+                </ul>
               </div>
             </div>
           )}
@@ -360,22 +530,29 @@ export default function ImportContactsModal({
               {validation.invalid > 0 && (
                 <div>
                   <h4 className="mb-2 text-sm font-semibold text-slate-800 dark:text-slate-100">
-                    Invalid rows
+                    Validation errors{' '}
+                    <span className="text-xs font-normal text-slate-500 dark:text-slate-400">
+                      (showing first 20 of {validation.invalidDetails.length})
+                    </span>
                   </h4>
                   <div className="overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800">
                     <table className="min-w-full text-xs">
                       <thead className="bg-slate-50 text-left text-[11px] uppercase tracking-wider text-slate-500 dark:bg-slate-900/60 dark:text-slate-400">
                         <tr>
                           <th className="px-3 py-2">Row</th>
-                          <th className="px-3 py-2">Email ID</th>
+                          <th className="px-3 py-2">Field</th>
+                          <th className="px-3 py-2">Email</th>
                           <th className="px-3 py-2">Reason</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                        {validation.invalidDetails.slice(0, 10).map((d) => (
-                          <tr key={`${d.row}-${d.emailId}`}>
+                        {validation.invalidDetails.slice(0, 20).map((d, i) => (
+                          <tr key={`${d.row}-${d.field}-${i}`}>
                             <td className="px-3 py-2 text-slate-500">{d.row}.</td>
-                            <td className="px-3 py-2 text-slate-700 dark:text-slate-200">
+                            <td className="px-3 py-2 font-medium text-slate-700 dark:text-slate-200">
+                              {FIELD_LABEL_BY_KEY[d.field] || d.field}
+                            </td>
+                            <td className="px-3 py-2 text-slate-600 dark:text-slate-300">
                               {d.emailId || '—'}
                             </td>
                             <td className="px-3 py-2 text-rose-600 dark:text-rose-400">
